@@ -1,0 +1,90 @@
+
+LogPoissonProbability(x,mu) // simple poisson function
+
+LogGaussianProbability(x,mu,sigma) // gaussian probability
+
+class Verosimilitud {
+    vector physics parameters : pp
+    vector nuisance parameters: np
+    
+    marray data: reco energy, reco zenith // histogram
+    marray simulation: reco energy, true energy, reco zenith, true zenith // histogram
+    
+    double OscillationProbability(E,Z,pp){
+    
+    }
+    
+    double LogLikelihood(pp,np){
+        mu[recoenergy][recozenith] = mu(pp,np) = sum_true_energy_true_zenith simulation[recoenergy][recozenith][trueenergy][truezenith]
+    // sum over each of the bins in marray::data
+    // here this loop/sum is over recoenergy and recozenith bins
+        return -sum(LogPoissonProbability(xdata,mu[recoenergy][recozenith])) + sum(LogNuisancePriors)
+    }
+    
+    vector<double> LogNuisancePriors(np){
+        return vector of nuisance parameter penalization
+        return {LogGaussianProbability(np[0],np[0]_prior), ... }
+    }
+    
+    Set_data()
+    
+    Set_simulation()
+}
+
+--------------------------------------------------------------------------------
+
+LLH(pp) = min_np (LLH(pp,np))
+
+Then, the best fit solution satisfies
+
+LLH_min = LLH(pp_min)
+
+Then the frequentist exclusion contours can be drawn in the following way
+
+2 ( LLH(pp) - LLH_min ) -> Chi2 of p degrees of freedom where p is the number 
+of pp.
+
+the p-value of a model pp is just related to the chi2 distribution probability.
+E.g. in 2 degrees of freedom #pp = 2, chi2 = 2.XX, its 1 sigma excluded.
+
+Then, the null exclusion, is just set pp = null. Where null is what ever the ana
+lyser is testing against. Its the stablishment.
+
+
+    [        *        ]
+-------------------------
+    P1     Pbest    P2
+
+2(LLH(P1) - LLH(Pbest) = 1. // magic number that comes from the number of dof
+and chi2 distribution.         
+
+Bayesian Recipe:
+
+Posterior(pp) = LLH(pp)*Prior(pp)
+
+credibility integrals [a,b] at confidence level alpha satisfy 
+
+integral_[a,b] posterior = alpha
+pp_best is in [a,b]
+          
+--------------------------------------------------------------------------------
+
+=========================
+|0,0 | Z  |    |    |   | E = E[0]
+=========================
+|    |    |    |    |   | E = E[1]
+=========================
+|    |    |    |    |   |  ...
+=========================
+|    |    |    |    |   |
+=========================
+
+data[ei][zi] : number of events in bin ei, zi. <- measured.
+mu[ei][zi] : number of expected events in bin ei,zi <- predicted
+mu[ei][zi] =  integral_true_quantities simulation*flux(te,tz)*P(te,tz,pp)*(...)
+
+np[0] : normalization of the flux
+Prior on NP: Gaussian with mean 1 and uncertainty 0.2
+...
+
+
