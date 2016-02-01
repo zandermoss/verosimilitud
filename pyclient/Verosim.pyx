@@ -3,23 +3,49 @@ from libcpp.vector cimport vector
 import numpy as np
 
 
+
+cdef double callback(vector[double] argument, void *f):
+	return (<object>f)(<object>argument)
+
 cdef class Verosim:
 	cdef cVerosimilitud.Verosimilitud* _c_verosimilitud
-	def __cinit__(self):
-		self._c_verosimilitud = <cVerosimilitud.Verosimilitud *>new cVerosimilitud.Verosimilitud()
+	def __cinit__(self,unsigned int numneu):
+		self._c_verosimilitud = <cVerosimilitud.Verosimilitud *>new cVerosimilitud.Verosimilitud(numneu)
 		#self._c_verosimilitud = new cVerosimilitud.Verosimilitud()
 		if self._c_verosimilitud is NULL:
 			raise MemoryError()
 
-	def getsheep(self):
-		cdef vector[double] v
-		v= self._c_verosimilitud.SendSheep()
-		return np.asarray(v)
-	
-	def printsheep(self,vector[double] sheep):
-		self._c_verosimilitud.PrintSheep(sheep)
+	def SetDecayStructure(self, vector[vector[double]] dcy_lambda):
+		self._c_verosimilitud.SetDecayStructure(dcy_lambda)
 		return
 
+	def SetMassStructure(self, vector[vector[double]] pmns_lambda):
+		self._c_verosimilitud.SetMassStructure(pmns_lambda)
+		return
+
+	def SetDecayEigenvalues(self, vector[double] dcy_eig):
+		self._c_verosimilitud.SetDecayEigenvalues(dcy_eig)
+		return
+
+	def PrintThing(self):
+		self._c_verosimilitud.PrintThing()
+		return
+
+	"""
+	def SetDeSolver(self,object obj):
+		self._c_verosimilitud.SetDeSolver(obj)
+		return
+	"""	
+
+	def SetDeSolver(self,f):
+		self._c_verosimilitud.SetDeSolver(callback,<void*>f)
+		return
+
+	def OscillationProbability(self,energy,zenith):
+		self._c_verosimilitud.OscillationProbability(energy,zenith)
+		return
+
+		
 	def __dealloc__(self):
 		cdef cVerosimilitud.Verosimilitud *temp
 		if self._c_verosimilitud is not NULL:

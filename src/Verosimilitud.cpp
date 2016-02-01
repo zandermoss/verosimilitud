@@ -1,12 +1,16 @@
 #include "Verosimilitud.h"
 #include <iostream>
+#include <stdexcept>
+#include <Python.h>
 
 
-		Verosimilitud::Verosimilitud(void)
+
+		Verosimilitud::Verosimilitud(unsigned int my_numneu)
 		{
+			numneu=my_numneu;	
 			std::cout << "BLEAT" << std::endl;
 		}
-
+		/*
 		std::vector<double> Verosimilitud::SendSheep(void)
 		{
 			std::vector<double> sheep;
@@ -18,16 +22,58 @@
 			}
 			return sheep;
 		}
+		*/
 
-        void Verosimilitud::PrintSheep(std::vector<double> sheep)
+        void Verosimilitud::SetDecayStructure(std::vector<std::vector<double> > my_dcy_lambda)
 		{
-			unsigned int sheeplen = sheep.size();
-			for(unsigned int i=0; i<sheeplen; i++)
+	        if((my_dcy_lambda.size() != my_dcy_lambda[0].size()) 
+				|| (my_dcy_lambda.size() != numneu))
 			{
-				std::cout << "SHEEP " << i << " : " << sheep[i] << std::endl; 
+	        	throw std::runtime_error("Decay lambda matrix has the wrong dimensions.");
 			}
+
+			for (unsigned int i=0; i<my_dcy_lambda.size(); i++)
+			{
+				decay_lambda.push_back(my_dcy_lambda[i]);
+			}	
 		}
 
+        void Verosimilitud::SetMassStructure(std::vector<std::vector<double> > my_pmns_lambda)
+		{
+	        if((my_pmns_lambda.size() != my_pmns_lambda[0].size()) 
+				|| (my_pmns_lambda.size() != numneu))
+			{
+	        	throw std::runtime_error("Decay lambda matrix has the wrong dimensions.");
+			}
+
+			for (unsigned int i=0; i<my_pmns_lambda.size(); i++)
+			{
+				pmns_lambda.push_back(my_pmns_lambda[i]);
+			}	
+		}
+
+        void Verosimilitud::SetDecayEigenvalues(std::vector<double> my_dcy_eig)
+		{
+	        if(my_dcy_eig.size() != numneu)
+			{
+	        	throw std::runtime_error("Decay eigenvalue vector has the wrong dimension.");
+			}
+
+			decay_eig=std::vector<double>(my_dcy_eig);
+		}
+
+		void Verosimilitud::Print1D(std::vector<double> array)
+		{
+			PrintArray(array);
+		}
+		void Verosimilitud::Print2D(std::vector<std::vector<double> > matrix)
+		{
+			PrintMatrix(matrix);
+		}
+		void Verosimilitud::PrintThing(void)
+		{
+			PrintMatrix(decay_lambda);
+		}
 /*
 	    double LogLikelihood(std::vector<double> pp,std::vector <double> np)
 		{
@@ -54,12 +100,25 @@
 	    }
 */
 
-	    double Verosimilitud::OscillationProbability(double energy,double zenith,std::vector<double> pp)
+	    double Verosimilitud::OscillationProbability(double energy,double zenith)
 		{
 	   	 	//Here we call nusheep. Although, would it be better to precalculate an array?
 			//I think for now I will implement direct calls.
-			return -1.0;
+			std::vector<double> argument;
+			argument.push_back(energy);
+			argument.push_back(zenith);
+			double osc_prob = de_solver(argument,user_data);	
+			std::cout << "  ZENITH: " << zenith << "  ENERGY: " << energy << "  PROB: " << osc_prob << std::endl;				
+			return osc_prob;
    		}
+
+		void Verosimilitud::SetDeSolver(pyoscfunc my_de_solver, void* my_user_data)
+		{
+			de_solver=my_de_solver;
+			user_data=my_user_data;		
+		}
+
+
 
     
    
