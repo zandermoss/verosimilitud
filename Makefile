@@ -7,8 +7,8 @@
 
 # define the C compiler to use
 #CC = gcc
-#CC = clang++
-CC = g++
+CC = clang++
+#CC = g++
 
 # define any compile-time flags
 CFLAGS = -Wall -g -fPIC -std=c++11

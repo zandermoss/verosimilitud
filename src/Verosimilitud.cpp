@@ -5,6 +5,7 @@
 #include "Flux.h"
 #include "Tensor.h"
 #include "H5Cpp.h"
+#include "EffectiveArea.h"
 
 /*
 //From effective_area_demo.c
@@ -312,7 +313,7 @@ int main(void){
 			//
 
         	return std::vector of nuisance parameter penalization
-        	return {LogGaussianProbability(np[0],np[0]_prior), ... }
+        	&return {LogGaussianProbability(np[0],np[0]_prior), ... }
 		}
 		*/	
 
@@ -342,70 +343,7 @@ int main(void){
 //void Verosimilitud::testhdf(void)
 int main(void)
 {
+	EffectiveArea ea = EffectiveArea();
 
-
-	double olv;	
-	H5::H5File file("./data/effective_area.h5",H5F_ACC_RDONLY);
-
-	H5::Group     *what = new H5::Group (file.openGroup( "/2010" ));
-	H5::Attribute *attr = new H5::Attribute(what->openAttribute("experimental_livetime(seconds)"));
-	H5::DataType  *type = new H5::DataType(attr->getDataType());
-	
-	attr->read(*type, &olv);
-	std::cout << olv << std::endl;
-
-
-
-
-
-	H5::DataSet dataset = file.openDataSet("/2010/nu_mu/area");
-	H5::DataSpace filespace = dataset.getSpace();
-	int rank = filespace.getSimpleExtentNdims();
-	hsize_t* dims = new hsize_t[rank];
-	rank = filespace.getSimpleExtentDims(dims);
-	std::cout << "dataset rank = " << rank << ", dimensions" << std::endl;
-
-	unsigned int* dankdims = new unsigned int[rank];	
-	for (unsigned int i=0; i<rank; i++)
-	{
-		std::cout << (unsigned long)(dims[i]) << std::endl;
-		dankdims[i] = (unsigned int)(dims[i]);
-	}
-	
-	std::cout << std::endl;
-
-	H5::DataSpace mspace1(rank,dims);
-
-	Tensor area(rank,dankdims);
-
-	
-	dataset.read(area.GetDataPointer(), H5::PredType::NATIVE_DOUBLE,mspace1,filespace);
-	std::cout << std::endl;
-	std::cout << "Dataset: " << std::endl;
-	unsigned int indices[3]={0,0,0};
-	for(unsigned int i=0;i<dims[2];i++)
-	{
-		for(unsigned int j=0;j<dims[1];j++)
-		{
-			for(unsigned int k=0;k<dims[0];k++)
-			{
-				indices[0]=k;
-				indices[1]=j;
-				indices[2]=i;
-				std::cout << "VALUE " << area.Index(indices)<< std::endl;
-				std::cout << indices[0]<<","<<indices[1]<<","<<indices[2]<< std::endl;
-				
-			}
-		}
-	}
-
-	std::cout <<"LAMB"<<std::endl;
-
-	delete dims;
-	delete dankdims;
-	area.~Tensor();
-	delete attr;
-	delete what;
-	delete type;
 	return 0;
 }
