@@ -21,6 +21,7 @@ class Verosimilitud {
         void Print1D(std::vector<double> array);
         void Print2D(std::vector<std::vector<double> > matrix);
         void PrintThing(void);
+		void testhdf(void);
 
 		
 

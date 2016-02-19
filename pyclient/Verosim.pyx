@@ -31,6 +31,10 @@ cdef class Verosim:
 		self._c_verosimilitud.PrintThing()
 		return
 
+	def testhdf(self):
+		self._c_verosimilitud.testhdf()
+		return
+
 	"""
 	def SetDeSolver(self,object obj):
 		self._c_verosimilitud.SetDeSolver(obj)

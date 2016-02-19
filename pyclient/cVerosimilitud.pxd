@@ -13,4 +13,5 @@ cdef extern from "Verosimilitud.h":
 		void PrintThing()
 		double OscillationProbability(double energy,double zenith)
 		void SetDeSolver(pyoscfunc de_solver, void* user_data)
+		void testhdf() 
 		

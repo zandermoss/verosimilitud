@@ -7,28 +7,29 @@
 
 # define the C compiler to use
 #CC = gcc
-CC = clang++
-#CC = g++
+#CC = clang++
+CC = g++
 
 # define any compile-time flags
-CFLAGS = -Wall -g -fPIC
+CFLAGS = -Wall -g -fPIC -std=c++11
 
 # define any directories containing header files other than /usr/include
 #
-INCLUDES = -I ./inc -I/usr/include/python2.7
+INCLUDES = -I ./inc -I/usr/include/python2.7 -I/usr/local/hdf5/include
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
-LFLAGS = 
+LFLAGS = -L/usr/local/hdf5/lib
 
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname 
 #   option, something like (this will link in libmylib.so and libm.so:
-LIBS = -lpython2.7 -lm
+LIBS = -lpython2.7 -lm -lhdf5 -lhdf5_cpp
 
 # define the C source files
-SRCS = src/Verosimilitud.cpp src/Tools.cpp
+#SRCS = src/Verosimilitud.cpp src/Tools.cpp
+SRCS = src/*
 
 # define the C object files 
 #
@@ -41,7 +42,8 @@ SRCS = src/Verosimilitud.cpp src/Tools.cpp
 OBJS = $(SRCS:.c=.o)
 
 # define the executable file 
-SHARED = libverosimilitud.so
+#SHARED = libverosimilitud.so
+SHARED = runolv
 
 #
 # The following part of the makefile is generic; it can be used to 
@@ -54,8 +56,10 @@ SHARED = libverosimilitud.so
 all:	$(SHARED)
 		@echo  Caller has been compiled
 
+#$(SHARED): $(OBJS) 
+#		$(CC) $(CFLAGS) -shared $(INCLUDES) -o $(SHARED) $(OBJS) $(LFLAGS) $(LIBS)
 $(SHARED): $(OBJS) 
-		$(CC) $(CFLAGS) -shared $(INCLUDES) -o $(SHARED) $(OBJS) $(LFLAGS) $(LIBS)
+		$(CC) $(CFLAGS) $(INCLUDES) -o $(SHARED) $(OBJS) $(LFLAGS) $(LIBS)
 
 # this is a suffix replacement rule for building .o's from .c's
 # it uses automatic variables $<: the name of the prerequisite of
