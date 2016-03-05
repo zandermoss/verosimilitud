@@ -5,6 +5,7 @@
 #include <vector>
 #include <math.h>
 #include <Python.h>
+#include "Tensor.h"
 
 class Verosimilitud {
 
@@ -22,6 +23,7 @@ class Verosimilitud {
         void Print2D(std::vector<std::vector<double> > matrix);
         void PrintThing(void);
 		void testhdf(void);
+		void Likelihood(void);
 
 		
 
@@ -49,6 +51,10 @@ class Verosimilitud {
 		std::vector<double> LogNuisancePriors(std::vector<double> np);
 		double Flux(double energy, double zenith);
 		double X_sec(double energy);
+
+
+		Tensor* expectation;
+
    
 // 	   Set_data()
     

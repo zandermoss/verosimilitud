@@ -103,6 +103,7 @@ EffectiveArea::EffectiveArea()
 	delete attr;
 	delete group;
 	delete type;
+	file.close();
 }
 
 
