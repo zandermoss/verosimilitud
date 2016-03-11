@@ -255,7 +255,22 @@ int main(void){
 //void Verosimilitud::testhdf(void)
 
 
-void Verosimilitud::Likelihood()
+std::vector<unsigned int> Verosimilitud::GetExpDims()
+{
+	return exp_dimvec;
+}
+
+std::vector<double> Verosimilitud::GetEproxEdges()
+{
+	return *eprox_edges;
+}
+
+std::vector<double> Verosimilitud::GetCosZenithEdges()
+{
+	return *coszenith_edges;
+}
+
+std::vector<double> Verosimilitud::Likelihood()
 {
 
     unsigned int NeutrinoEnergyBins=280;
@@ -281,8 +296,20 @@ void Verosimilitud::Likelihood()
 
 	unsigned int exp_dims[2]={EnergyProxyBins,CosZenithBins};
 	expectation = new Tensor(2,exp_dims);
+	for (int x=0; x<exp_dims[0]; x++)
+	{
+		for (int y=0; y<exp_dims[1]; y++)
+		{
+			unsigned int ind[2];
+			ind[0]=x;
+			ind[1]=y;
+			expectation->SetIndex(ind,0);
+		}
+	}	
 
 	unsigned int counter=0;
+
+	double countsheep=0;
 
 	std::cout << "AtLoops" << std::endl;
 	
@@ -330,7 +357,7 @@ void Verosimilitud::Likelihood()
 					for(unsigned int z=0; z<CosZenithBins; z++)
 					{
 						counter++;
-						std::cout << counter << std::endl;
+						//std::cout << counter << std::endl;
 						dyn_indices[1]=z;
 						unsigned int zp1=z+1;	
 						double CosZenithMin=CosZenithEdges->Index(&z);
@@ -338,6 +365,7 @@ void Verosimilitud::Likelihood()
 
 						double FluxIntegral = flux->Index(dyn_indices);
 						//implement DOM correction?
+						double DomCorr = detcorr->Index(dyn_indices);
 						double EffAreaVal = area->Index(dyn_indices); 
 						EffAreaVal*=1.0e4; //m^2 to cm^2
 
@@ -346,13 +374,41 @@ void Verosimilitud::Likelihood()
 						//double oscprob = OscillationProbability(eavg,zavg);
 	
 						unsigned int exp_indices[2]={ep,z};
-						expectation->SetIndex(exp_indices,FluxIntegral*EffAreaVal*livetime);
+
+						double last=expectation->Index(exp_indices);
+						expectation->SetIndex(exp_indices,last+FluxIntegral*EffAreaVal*livetime*DomCorr);
+						countsheep+=FluxIntegral*EffAreaVal*livetime*DomCorr;
 	
 					}
 				}
 			}
 		}
 	}
+	std::cout<<"COUNTSHEEP: " << countsheep << std::endl;
+
+	double* eprox_edges_array =EnergyProxyEdges->GetDataPointer();
+	unsigned int eprox_size = EnergyProxyEdges->GetDataLength();
+	double* coszenith_edges_array = CosZenithEdges->GetDataPointer();
+	unsigned int coszenith_size= CosZenithEdges->GetDataLength();
+
+	eprox_edges=new std::vector<double>(eprox_edges_array, eprox_edges_array+eprox_size);
+	coszenith_edges = new std::vector<double>(coszenith_edges_array, coszenith_edges_array+coszenith_size);
+
+
+	double * exparray = expectation->GetDataPointer();
+	unsigned int explen = expectation->GetDataLength();
+	std::vector<double> expvec(exparray, exparray + explen);
+	unsigned int expdims[]={0,0};
+	expectation->GetDims(expdims);
+	exp_dimvec.push_back(expdims[0]);
+	exp_dimvec.push_back(expdims[1]);
+	//std::cout << exp_dims[0] << std::endl;
+	std::cout << expdims[0] << std::endl;
+	std::cout << expdims[1] << std::endl;
+	std::cout << exp_dimvec[0] << std::endl;
+	std::cout << exp_dimvec[1] << std::endl;
+	return expvec;
+
 }
 
 int main(void)
@@ -360,7 +416,6 @@ int main(void)
 
 
 Verosimilitud v(3);
-
 /*
 unsigned int indices[3]={0,0,0};
 for(unsigned int i=0;i<dims[2];i++)
@@ -379,7 +434,6 @@ for(unsigned int i=0;i<dims[2];i++)
 	}
 }
 */
-
 	v.Likelihood();
 
 

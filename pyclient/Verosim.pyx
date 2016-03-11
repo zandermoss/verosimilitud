@@ -31,9 +31,17 @@ cdef class Verosim:
 		self._c_verosimilitud.PrintThing()
 		return
 
-	def testhdf(self):
-		self._c_verosimilitud.testhdf()
-		return
+	def GetExpDims(self):
+		return self._c_verosimilitud.GetExpDims()
+
+	def GetEproxEdges(self):
+		return self._c_verosimilitud.GetEproxEdges()
+
+	def GetCosZenithEdges(self):
+		return self._c_verosimilitud.GetCosZenithEdges()
+
+	def Likelihood(self):
+		return self._c_verosimilitud.Likelihood()
 
 	"""
 	def SetDeSolver(self,object obj):

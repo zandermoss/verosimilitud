@@ -3,7 +3,7 @@
 
 EffectiveArea::EffectiveArea()
 {	
-	H5::H5File file("./data/effective_area.h5",H5F_ACC_RDONLY);
+	H5::H5File file("/home/pinkpig/physics/neutrino_decay/verosimilitud/data/effective_area.h5",H5F_ACC_RDONLY);
 
 	std::string year_names[]={"2010","2011"};
 	std::string flavor_names[]={"_mu","_tau"};

@@ -23,7 +23,10 @@ class Verosimilitud {
         void Print2D(std::vector<std::vector<double> > matrix);
         void PrintThing(void);
 		void testhdf(void);
-		void Likelihood(void);
+		std::vector<unsigned int> GetExpDims(void);
+		std::vector<double> GetEproxEdges(void);
+		std::vector<double> GetCosZenithEdges(void);
+		std::vector<double> Likelihood(void);
 
 		
 
@@ -52,6 +55,10 @@ class Verosimilitud {
 		double Flux(double energy, double zenith);
 		double X_sec(double energy);
 
+
+		std::vector<unsigned int> exp_dimvec;
+		std::vector<double>* eprox_edges;
+		std::vector<double>* coszenith_edges;
 
 		Tensor* expectation;
 
