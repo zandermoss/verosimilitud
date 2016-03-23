@@ -7,6 +7,7 @@
 #include "H5Cpp.h"
 #include "EffectiveArea.h"
 #include "ConventionalFlux.h"
+#include "ICData.h"
 
 /*
 //From effective_area_demo.c
@@ -415,7 +416,51 @@ int main(void)
 {
 
 
-Verosimilitud v(3);
+//Verosimilitud v(3);
+/*
+
+
+for (int i=0; i<cosz.size(); i++)
+{
+//	std::cout << cosz[i] << std::endl;
+}
+*/
+    EffectiveArea eff_area = EffectiveArea();
+    unsigned int CosZenithBins=11;
+    unsigned int EnergyProxyBins=50;
+	Tensor* NeutrinoEnergyEdges;
+	Tensor* CosZenithEdges;
+	Tensor* EnergyProxyEdges;
+	unsigned int edge_indices[4] = {0,0,0,0};
+	edge_indices[3] = 1;
+	CosZenithEdges = eff_area.GetEdge(edge_indices);
+	edge_indices[3] = 2;
+	EnergyProxyEdges = eff_area.GetEdge(edge_indices);
+
+
+
+ICData icd(CosZenithEdges,EnergyProxyEdges);
+std::cout << "SHEEP" << std::endl;
+icd.OpenCSV("observed_events.dat");
+std::vector<unsigned int> cosz(CosZenithBins,0);
+std::vector<unsigned int> eprox(EnergyProxyBins,0);
+icd.ReadCSV();
+std::cout << "SHEEP" << std::endl;
+icd.BinData(&cosz,&eprox);
+std::cout << cosz.size() << std::endl;
+
+	for (unsigned int i=0; i<cosz.size(); i++)
+	{
+		std::cout << cosz[i] << std::endl;
+	}
+/*
+	for (unsigned int i=0; i<eprox.size(); i++)
+	{
+		std::cout << eprox[i] << std::endl;
+	}
+*/
+
+
 /*
 unsigned int indices[3]={0,0,0};
 for(unsigned int i=0;i<dims[2];i++)
@@ -434,7 +479,7 @@ for(unsigned int i=0;i<dims[2];i++)
 	}
 }
 */
-	v.Likelihood();
+//	v.Likelihood();
 
 
 

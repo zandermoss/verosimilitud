@@ -42,8 +42,8 @@ SRCS = src/*
 OBJS = $(SRCS:.c=.o)
 
 # define the executable file 
-SHARED = libverosimilitud.so
-#SHARED = runolv
+#SHARED = libverosimilitud.so
+SHARED = runolv
 
 #
 # The following part of the makefile is generic; it can be used to 
@@ -56,10 +56,10 @@ SHARED = libverosimilitud.so
 all:	$(SHARED)
 		@echo  Caller has been compiled
 
-$(SHARED): $(OBJS) 
-		$(CC) $(CFLAGS) -shared $(INCLUDES) -o $(SHARED) $(OBJS) $(LFLAGS) $(LIBS)
 #$(SHARED): $(OBJS) 
-#		$(CC) $(CFLAGS) $(INCLUDES) -o $(SHARED) $(OBJS) $(LFLAGS) $(LIBS)
+#		$(CC) $(CFLAGS) -shared $(INCLUDES) -o $(SHARED) $(OBJS) $(LFLAGS) $(LIBS)
+$(SHARED): $(OBJS) 
+		$(CC) $(CFLAGS) $(INCLUDES) -o $(SHARED) $(OBJS) $(LFLAGS) $(LIBS)
 
 # this is a suffix replacement rule for building .o's from .c's
 # it uses automatic variables $<: the name of the prerequisite of

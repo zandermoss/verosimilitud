@@ -41,7 +41,32 @@ for x in range(0,dims[0]):
 
 
 eprox= np.asarray(V.GetEproxEdges())
-cosz=np.asarray( V.GetCosZenithEdges())
+#cosz=np.asarray( V.GetCosZenithEdges())
+cosz= [-1. , -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1,  0.,   0.1]
+
+print "COSZ: ", cosz
+
+
+fig,ax=plt.subplots()
+data=np.genfromtxt("./observed_events.dat")
+data_eproxy = data[:,2]
+data_cosz = data[:,3]
+
+bins_center_costh = [ (cosz[i]+cosz[i+1])/2.0 for i in range(len(cosz)-1) ]
+print data_cosz
+print len(data_cosz)
+print "COSZ2: ", cosz
+n,b,p=ax.hist(data_cosz, bins=cosz, color='Green',histtype="step",label="Data",lw=1)
+
+print n
+
+print "SUM: ",np.sum(n)
+
+error = lambda x : sqrt(x)
+ax.errorbar(bins_center_costh, n, yerr=error(n), color = "black",linewidth=0,elinewidth=2)
+
+
+ax.plot(bins_center_costh,n,'*')
 
 
 
@@ -49,44 +74,27 @@ eprox_marg=np.sum(expectation,axis=1)
 
 cosz_marg=np.sum(expectation,axis=0)
 print np.sum(cosz_marg)
-fig=plt.figure()
 
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 plt.rc('font', size=14)
 
-fig,ax=plt.subplots()
-
-bins_center_costh = [ (cosz[i]+cosz[i+1])/2.0 for i in range(len(cosz)-1) ]
-
-plt.hist(bins_center_costh,bins = cosz, weights = cosz_marg,histtype = 'step',color = "DarkRed", lw =2, alpha=1.0,label = 'Expectation')
 
 
-#n, bins, patches = plt.hist(cosz_marg, bins=cosz, facecolor='green', alpha=0.75)
-
-"""
-#H, eprox, cosz = np.histogram2d(y, x, bins=(eprox, cosz))
-fig=plt.figure()
-#plt.set_title('pcolormesh: exact bin edges')
-X, Y = np.meshgrid( cosz,eprox)
-plt.pcolormesh(X, Y, expectation,norm=LogNorm(),cmap='PuBu_r')
-plt.colorbar()
-#ax.set_aspect('equal')
-"""
-#plt.show()
-
-data=pd.read_csv("observed_events.dat",sep=" ")
-
-data_eproxy = data['energy_proxy'].as_matrix()
-data_cosz = data['cos(reconstructed_zenith)'].as_matrix()
-
-n,b,p=plt.hist(data_cosz, bins=cosz, color='Red',histtype="step",label="Data",lw=0)
-
-error = lambda x : sqrt(x)
-plt.errorbar(bins_center_costh, n, yerr=error(n), color = "black",linewidth=0,elinewidth=2)
+ax.hist(bins_center_costh,bins = cosz, weights = cosz_marg,histtype = 'step',color = "Red", lw =2, alpha=1.0,label = 'Expectation')
 
 
-plt.plot(bins_center_costh,n,'*')
+weaver=np.genfromtxt("./weaver.dat")
+weaver_exp = weaver[:,0]
+weaver_data = weaver[:,1]
+
+
+print "WLEN: ",len(weaver_exp)
+print "CLEN: ",len(bins_center_costh)
+
+ax.hist(bins_center_costh,bins = cosz, weights = weaver_exp,histtype = 'step',color = "Red", lw =2, alpha=1.0,label = 'Weaver Expectation',ls='dashed')
+
+ax.hist(bins_center_costh,bins = cosz, weights = weaver_data,histtype = 'step',color = "Green", lw =2, alpha=1.0,label = 'Weaver Data',ls='dashed')
 
 
 # Now add the legend with some customizations.
