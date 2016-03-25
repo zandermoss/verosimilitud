@@ -10,14 +10,18 @@ ICData::ICData(Tensor* t_eprox_edges, Tensor* t_cosz_edges)
     cosz_edges = new std::vector<double>(CosZenithBins+1,0);
     eprox_edges = new std::vector<double>(EnergyProxyBins+1,0);
 
+		std::cout << "COSZ EDGES: " << std::endl;
     for (unsigned int i=0; i<cosz_edges->size(); i++)
     {
         (*cosz_edges)[i]=t_cosz_edges->Index(&i);
+		std::cout << (*cosz_edges)[i] << std::endl;
     }
 
+		std::cout << "EPROX EDGES: " << std::endl;
     for (unsigned int i=0; i<eprox_edges->size(); i++)
     {
         (*eprox_edges)[i]=t_eprox_edges->Index(&i);
+		std::cout << (*eprox_edges)[i] << std::endl;
     }
 }
 
@@ -28,6 +32,7 @@ void ICData::OpenCSV(std::string filename)
 
 void ICData::ReadCSV(void)
 {
+	
 	std::string value;
 	while ( datafile.good() )
 	{

@@ -33,6 +33,14 @@ class Verosimilitud {
 		std::vector<double> Likelihood(void);
 		std::vector<double> CalculateExpectation(void);
 
+
+		void SetEproxCuts(std::vector<double> cuts);
+		void SetCoszCuts(std::vector<double> cuts);
+
+		const unsigned int NeutrinoEnergyBins=280;
+    	const unsigned int CosZenithBins=11;
+    	const unsigned int EnergyProxyBins=50;
+
 		
 
 	protected:
@@ -69,9 +77,6 @@ class Verosimilitud {
 
 
 
-		const unsigned int NeutrinoEnergyBins=280;
-    	const unsigned int CosZenithBins=11;
-    	const unsigned int EnergyProxyBins=50;
 
 	    EffectiveArea* eff_area;
 	    Tensor* area;
@@ -90,7 +95,9 @@ class Verosimilitud {
 
 
 
-
+		std::vector<double>* eprox_cuts;
+		std::vector<double>* cosz_cuts;
+	
 
 
    

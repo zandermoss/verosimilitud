@@ -5,8 +5,8 @@
 
 double LogPoissonProbability(unsigned int x,double mu) // simple poisson function
 {
-	std::cout << "X: " << x << " LGAMMA: " << lgamma((double)(x+1)) << std::endl;
-	std::cout << "mu: " << mu << std::endl;
+	//std::cout << "X: " << x << " LGAMMA: " << lgamma((double)(x+1)) << std::endl;
+	//std::cout << "mu: " << mu << std::endl;
     return ((double)x)*log(mu)-mu - lgamma((double)(x+1));
 }
 

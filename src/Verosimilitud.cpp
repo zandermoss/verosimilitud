@@ -147,8 +147,43 @@ int main(void){
 	data = new Tensor(2,datadims,0);
     icd->BinData(data);
 
+	eprox_cuts = new std::vector<double>(2,0);
+	cosz_cuts = new std::vector<double>(2,0);
 
+	(*eprox_cuts)[0]=0;
+	(*eprox_cuts)[1]=EnergyProxyBins;
+
+	(*cosz_cuts)[0]=0;
+	(*cosz_cuts)[1]=CosZenithBins;
+	}
+
+
+	void Verosimilitud::SetCoszCuts(std::vector<double> cuts)
+	{
+		if(cuts.size() != (*cosz_cuts).size()) 
+		{
+			throw std::runtime_error("Cuts Size Incorrect.");
 		}
+
+		for (unsigned int i; i<cuts.size(); i++)
+		{
+			(*cosz_cuts)[i]=cuts[i];
+		}
+	}
+
+	void Verosimilitud::SetEproxCuts(std::vector<double> cuts)
+	{
+		if(cuts.size() != (*eprox_cuts).size()) 
+		{
+			throw std::runtime_error("Cuts Size Incorrect.");
+		}
+
+		for (unsigned int i; i<cuts.size(); i++)
+		{
+			(*eprox_cuts)[i]=cuts[i];
+		}
+	}
+
 
 		Verosimilitud::~Verosimilitud()
 		{
@@ -156,6 +191,8 @@ int main(void){
 			delete conv_flux;
 			delete data;
 			delete icd;
+			delete eprox_cuts;
+			delete cosz_cuts;
 		}
 	
         void Verosimilitud::SetDecayStructure(std::vector<std::vector<double> > my_dcy_lambda)
@@ -427,15 +464,56 @@ std::vector<double> Verosimilitud::Likelihood(void)
 	double sllh=0;
 	int count=0;
 	double prob;
-	for(unsigned int ep=0; ep<EnergyProxyBins; ep++)
+
+	double totcount=0;
+
+	std::vector<double> eprox_vec(EnergyProxyBins,0);	
+	for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
    	{
-		for(unsigned int z=0; z<CosZenithBins; z++)
+		for(unsigned int z=(*cosz_cuts)[0]; z<(*cosz_cuts)[1]; z++)
+		{
+			indices[0]=ep;
+			indices[1]=z;
+            //scalar_exp=expectation->Index(indices);
+			scalar_data=data->Index(indices);
+			eprox_vec[ep]+=scalar_data;
+			totcount+=scalar_data;
+		}
+
+
+		std::cout<< eprox_vec[ep] <<std::endl;
+	}
+	
+		std::cout << "TOT: " << totcount << std::endl;
+		std::cout<< "COSZ: " <<std::endl;
+			
+	std::vector<double> cosz_vec(CosZenithBins,0);	
+	for(unsigned int z=(*cosz_cuts)[0]; z<(*cosz_cuts)[1]; z++)
+	{
+		for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
+   		{
+			indices[0]=ep;
+			indices[1]=z;
+            //scalar_exp=expectation->Index(indices);
+			scalar_data=data->Index(indices);
+			cosz_vec[z]+=scalar_data;
+		}
+
+
+		std::cout<< cosz_vec[z] <<std::endl;
+	}
+	
+	
+
+	for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
+   	{
+		for(unsigned int z=(*cosz_cuts)[0]; z<(*cosz_cuts)[1]; z++)
 		{
 			indices[0]=ep;
 			indices[1]=z;
             scalar_exp=expectation->Index(indices);
 			scalar_data=data->Index(indices);
-	std::cout << "LIK" << std::endl;
+	//std::cout << "LIK" << std::endl;
 			prob = LogPoissonProbability(scalar_data,scalar_exp);
 			if (std::isnan(prob))
 			{
@@ -443,15 +521,15 @@ std::vector<double> Verosimilitud::Likelihood(void)
 			}
 			llh+=prob;
 			count++;
-			std::cout <<"LLH: "<< llh << std::endl;
-			std::cout << "COUNT: " << count << " / " << EnergyProxyBins*CosZenithBins << std::endl;
+			//std::cout <<"LLH: "<< llh << std::endl;
+			//std::cout << "COUNT: " << count << " / " << ((*eprox_cuts)[1]-(*eprox_cuts)[0])*((*cosz_cuts)[1]-(*cosz_cuts)[0]) << std::endl;
 		}
 	}	
 
 
-	for(unsigned int ep=0; ep<EnergyProxyBins; ep++)
+	for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
    	{
-		for(unsigned int z=0; z<CosZenithBins; z++)
+		for(unsigned int z=(*cosz_cuts)[0]; z<(*cosz_cuts)[1]; z++)
 		{
 			indices[0]=ep;
 			indices[1]=z;
@@ -469,7 +547,7 @@ std::vector<double> Verosimilitud::Likelihood(void)
 
 	std::vector<double> retvec(2,0);
 	retvec[0]=2*fabs(llh-sllh);
-	retvec[1]=EnergyProxyBins*CosZenithBins;	
+	retvec[1]=((*eprox_cuts)[1]-(*eprox_cuts)[0])*((*cosz_cuts)[1]-(*cosz_cuts)[0]);
 				
 	return retvec;
 }
@@ -480,6 +558,17 @@ int main(void)
 {
 
 	Verosimilitud v(3);
+
+	std::vector<double> my_eprox_cuts(2,0);
+	std::vector<double> my_cosz_cuts(2,0);
+	
+	my_eprox_cuts[0]=6;
+	my_eprox_cuts[1]=v.EnergyProxyBins-17;
+
+	//v.SetEproxCuts(my_eprox_cuts);
+
+	
+
 	v.CalculateExpectation();
 	std::vector<double> retvec = v.Likelihood();	
 	std::cout << retvec[0] << std::endl;
