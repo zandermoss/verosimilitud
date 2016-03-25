@@ -1,27 +1,23 @@
 #include "ICData.h"
 #include <iostream>
 #include <string>
+#include <algorithm>
 #include "Tensor.h"
 
 ICData::ICData(Tensor* t_eprox_edges, Tensor* t_cosz_edges)
 {
 
-
     cosz_edges = new std::vector<double>(CosZenithBins+1,0);
     eprox_edges = new std::vector<double>(EnergyProxyBins+1,0);
 
-		std::cout << "COSZ EDGES: " << std::endl;
     for (unsigned int i=0; i<cosz_edges->size(); i++)
     {
         (*cosz_edges)[i]=t_cosz_edges->Index(&i);
-		std::cout << (*cosz_edges)[i] << std::endl;
     }
 
-		std::cout << "EPROX EDGES: " << std::endl;
     for (unsigned int i=0; i<eprox_edges->size(); i++)
     {
         (*eprox_edges)[i]=t_eprox_edges->Index(&i);
-		std::cout << (*eprox_edges)[i] << std::endl;
     }
 }
 
@@ -32,7 +28,6 @@ void ICData::OpenCSV(std::string filename)
 
 void ICData::ReadCSV(void)
 {
-	
 	std::string value;
 	while ( datafile.good() )
 	{
@@ -45,8 +40,10 @@ void ICData::ReadCSV(void)
 			value = value.substr(value.find_first_of(" ") + 1);
 			tokens.push_back(token);
 		}
-		if (tokens.size() < 5) break;
-		
+		if (tokens.size() < 5) 
+		{
+			break;
+		}		
 		cosz.push_back(atof(tokens[tokens.size()-1].c_str()));
 		eprox.push_back(atof(tokens[tokens.size()-2].c_str()));
 	}
@@ -81,23 +78,48 @@ void ICData::BinData(Tensor* binned_data)
 	unsigned int cosbin;
 	unsigned int eproxbin;
 	double last;
+
 	for (unsigned int i=0; i<cosz.size(); i++)
 	{
 		cosbin=0;
 		eproxbin=0;
-		//std::cout << "COS: " << cosz[i] << " EPROX: " << eprox[i] << std::endl;
-		while(!((cosz[i]>=(*cosz_edges)[cosbin])&&(cosz[i]<(*cosz_edges)[cosbin+1])))
+		
+		if (cosz[i]<cosz_edges->front())
 		{
-			cosbin++;
+			cosbin=0;
 		}
-		while(!((eprox[i]>=(*eprox_edges)[eproxbin])&&(eprox[i]<(*eprox_edges)[eproxbin+1])))
+		else if (cosz[i]>=cosz_edges->back())
 		{
-			eproxbin++;
+			cosbin=cosz_edges->size()-2;
 		}
-		//std::cout << "COSLOW: " << (*cosz_edges)[cosbin] << " COSHIGH: " << (*cosz_edges)[cosbin+1] << std::endl;
-		//std::cout << "EPROXLOW: " << (*eprox_edges)[eproxbin] << " EPROXHIGH: " << (*eprox_edges)[eproxbin+1] << std::endl;
+		else 
+		{
+			while(!((cosz[i]>=(*cosz_edges)[cosbin])&&(cosz[i]<(*cosz_edges)[cosbin+1])))
+			{
+				cosbin++;
+			}
+		}
+
+
+		if (eprox[i]<eprox_edges->front())
+		{
+			eproxbin=0;
+		}
+		else if (eprox[i]>=eprox_edges->back())
+		{
+			eproxbin=eprox_edges->size()-2;
+		}
+		else 
+		{
+			while(!((eprox[i]>=(*eprox_edges)[eproxbin])&&(eprox[i]<(*eprox_edges)[eproxbin+1])))
+			{
+				eproxbin++;
+			}
+		}
+
 		indices[0]=eproxbin;
 		indices[1]=cosbin;
+
         last=binned_data->Index(indices);
 	    binned_data->SetIndex(indices,last+1);
 	}	

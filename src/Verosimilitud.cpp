@@ -474,10 +474,10 @@ std::vector<double> Verosimilitud::Likelihood(void)
 		{
 			indices[0]=ep;
 			indices[1]=z;
-            //scalar_exp=expectation->Index(indices);
-			scalar_data=data->Index(indices);
-			eprox_vec[ep]+=scalar_data;
-			totcount+=scalar_data;
+            scalar_exp=expectation->Index(indices);
+			//scalar_data=data->Index(indices);
+			eprox_vec[ep]+=scalar_exp;
+			totcount+=scalar_exp;
 		}
 
 
@@ -494,9 +494,9 @@ std::vector<double> Verosimilitud::Likelihood(void)
    		{
 			indices[0]=ep;
 			indices[1]=z;
-            //scalar_exp=expectation->Index(indices);
-			scalar_data=data->Index(indices);
-			cosz_vec[z]+=scalar_data;
+            scalar_exp=expectation->Index(indices);
+			//scalar_data=data->Index(indices);
+			cosz_vec[z]+=scalar_exp;
 		}
 
 
@@ -563,9 +563,9 @@ int main(void)
 	std::vector<double> my_cosz_cuts(2,0);
 	
 	my_eprox_cuts[0]=6;
-	my_eprox_cuts[1]=v.EnergyProxyBins-17;
+	my_eprox_cuts[1]=v.EnergyProxyBins-18;
 
-	//v.SetEproxCuts(my_eprox_cuts);
+	v.SetEproxCuts(my_eprox_cuts);
 
 	
 
