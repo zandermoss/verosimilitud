@@ -6,12 +6,16 @@
 #include <math.h>
 #include <Python.h>
 #include "Tensor.h"
+#include "EffectiveArea.h"
+#include "ICData.h"
+#include "ConventionalFlux.h"
 
 class Verosimilitud {
 
 	public:
 
 		Verosimilitud(unsigned int my_numneu);
+		~Verosimilitud();
 	    double LogLikelihood(std::vector<double> pp,std::vector<double> np);
 		typedef double (*pyoscfunc)(std::vector<double> argument, void *userdata);
 	    double OscillationProbability(double energy,double zenith);
@@ -27,6 +31,7 @@ class Verosimilitud {
 		std::vector<double> GetEproxEdges(void);
 		std::vector<double> GetCosZenithEdges(void);
 		std::vector<double> Likelihood(void);
+		std::vector<double> CalculateExpectation(void);
 
 		
 
@@ -61,6 +66,32 @@ class Verosimilitud {
 		std::vector<double>* coszenith_edges;
 
 		Tensor* expectation;
+
+
+
+		const unsigned int NeutrinoEnergyBins=280;
+    	const unsigned int CosZenithBins=11;
+    	const unsigned int EnergyProxyBins=50;
+
+	    EffectiveArea* eff_area;
+	    Tensor* area;
+	    Tensor* NeutrinoEnergyEdges;
+	    Tensor* CosZenithEdges;
+	    Tensor* EnergyProxyEdges;
+
+		Tensor* data;
+		
+		ICData* icd;
+	
+	    ConventionalFlux* conv_flux;
+	    Tensor* flux;
+	    Tensor* detcorr;
+	
+
+
+
+
+
 
    
 // 	   Set_data()

@@ -5,14 +5,9 @@
 
 double LogPoissonProbability(unsigned int x,double mu) // simple poisson function
 {
-    double logfact=0;
-    for (unsigned int j=1; j<=x; j++)
-    {
-        logfact+=log((double)j);
-    }
-    // Use product instead? Numerically stable? Time it?
-
-    return ((double)x)*log(mu)-mu-logfact;
+	std::cout << "X: " << x << " LGAMMA: " << lgamma((double)(x+1)) << std::endl;
+	std::cout << "mu: " << mu << std::endl;
+    return ((double)x)*log(mu)-mu - lgamma((double)(x+1));
 }
 
 

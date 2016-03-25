@@ -1,8 +1,9 @@
 #include "ICData.h"
 #include <iostream>
 #include <string>
+#include "Tensor.h"
 
-ICData::ICData(Tensor* t_cosz_edges, Tensor* t_eprox_edges)
+ICData::ICData(Tensor* t_eprox_edges, Tensor* t_cosz_edges)
 {
 
 
@@ -67,6 +68,36 @@ void ICData::BinData(std::vector<unsigned int>* cosz_binned, std::vector<unsigne
 		}
 	}
 }
+
+
+void ICData::BinData(Tensor* binned_data)
+{
+	unsigned int indices[2];
+	unsigned int cosbin;
+	unsigned int eproxbin;
+	double last;
+	for (unsigned int i=0; i<cosz.size(); i++)
+	{
+		cosbin=0;
+		eproxbin=0;
+		//std::cout << "COS: " << cosz[i] << " EPROX: " << eprox[i] << std::endl;
+		while(!((cosz[i]>=(*cosz_edges)[cosbin])&&(cosz[i]<(*cosz_edges)[cosbin+1])))
+		{
+			cosbin++;
+		}
+		while(!((eprox[i]>=(*eprox_edges)[eproxbin])&&(eprox[i]<(*eprox_edges)[eproxbin+1])))
+		{
+			eproxbin++;
+		}
+		//std::cout << "COSLOW: " << (*cosz_edges)[cosbin] << " COSHIGH: " << (*cosz_edges)[cosbin+1] << std::endl;
+		//std::cout << "EPROXLOW: " << (*eprox_edges)[eproxbin] << " EPROXHIGH: " << (*eprox_edges)[eproxbin+1] << std::endl;
+		indices[0]=eproxbin;
+		indices[1]=cosbin;
+        last=binned_data->Index(indices);
+	    binned_data->SetIndex(indices,last+1);
+	}	
+}
+
 
 ICData::~ICData()
 {	

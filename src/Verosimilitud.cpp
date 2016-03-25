@@ -8,6 +8,8 @@
 #include "EffectiveArea.h"
 #include "ConventionalFlux.h"
 #include "ICData.h"
+#include <cmath>
+#include <cfloat>
 
 /*
 //From effective_area_demo.c
@@ -119,9 +121,43 @@ int main(void){
 		{
 			numneu=my_numneu;	
 			std::cout << "BLEAT" << std::endl;
+
+
+
+	eff_area = new EffectiveArea();
+
+	conv_flux = new ConventionalFlux();
+
+    unsigned int edge_indices[4] = {0,0,0,0};
+	NeutrinoEnergyEdges = eff_area->GetEdge(edge_indices);
+    edge_indices[3] = 1;
+    CosZenithEdges = eff_area->GetEdge(edge_indices);
+    edge_indices[3] = 2;
+    EnergyProxyEdges = eff_area->GetEdge(edge_indices);
+	icd = new ICData(EnergyProxyEdges, CosZenithEdges);
+	icd->OpenCSV("observed_events.dat");
+	//std::vector<unsigned int> data_cosz(CosZenithBins,0);
+	//std::vector<unsigned int> data_eprox(EnergyProxyBins,0);
+	//icd.BinData(&data_cosz,&data_eprox);
+
+	icd->ReadCSV();
+	unsigned int datadims[2];
+	datadims[0]=EnergyProxyBins;
+	datadims[1]=CosZenithBins;
+	data = new Tensor(2,datadims,0);
+    icd->BinData(data);
+
+
 		}
 
-
+		Verosimilitud::~Verosimilitud()
+		{
+			delete eff_area;
+			delete conv_flux;
+			delete data;
+			delete icd;
+		}
+	
         void Verosimilitud::SetDecayStructure(std::vector<std::vector<double> > my_dcy_lambda)
 		{
 	        if((my_dcy_lambda.size() != my_dcy_lambda[0].size()) 
@@ -271,42 +307,16 @@ std::vector<double> Verosimilitud::GetCosZenithEdges()
 	return *coszenith_edges;
 }
 
-std::vector<double> Verosimilitud::Likelihood()
+std::vector<double> Verosimilitud::CalculateExpectation()
 {
-
-    unsigned int NeutrinoEnergyBins=280;
-    unsigned int CosZenithBins=11;
-    unsigned int EnergyProxyBins=50;
-
 	unsigned int dyn_indices[3];
 	unsigned int exp_indices[2];
 	unsigned int area_indices[3];
 	unsigned int edge_indices[4];
 
-	EffectiveArea eff_area = EffectiveArea();
-
-	Tensor* area;
-	Tensor* NeutrinoEnergyEdges;
-	Tensor* CosZenithEdges;
-	Tensor* EnergyProxyEdges;
-
-	ConventionalFlux conv_flux = ConventionalFlux();
-
-	Tensor* flux;
-	Tensor* detcorr;
 
 	unsigned int exp_dims[2]={EnergyProxyBins,CosZenithBins};
-	expectation = new Tensor(2,exp_dims);
-	for (int x=0; x<exp_dims[0]; x++)
-	{
-		for (int y=0; y<exp_dims[1]; y++)
-		{
-			unsigned int ind[2];
-			ind[0]=x;
-			ind[1]=y;
-			expectation->SetIndex(ind,0);
-		}
-	}	
+	expectation = new Tensor(2,exp_dims,0);
 
 	unsigned int counter=0;
 
@@ -325,25 +335,17 @@ std::vector<double> Verosimilitud::Likelihood()
 			//Do muon neutrinos only: no loop over flavor.
 			unsigned int flavor=0;
 
-			double livetime= eff_area.GetLivetime(year);			
+			double livetime= eff_area->GetLivetime(year);			
 
 			//Loop over matter/antimatter
 			for (unsigned int anti=0; anti<2; anti++)
 			{
 
 				unsigned int area_indices[3] = {year,flavor,anti};
-				area = eff_area.GetArea(area_indices);
+				area = eff_area->GetArea(area_indices);
 
-				detcorr = conv_flux.GetDetCorr(&year);
-				flux = conv_flux.GetFlux(&anti);
-
-				unsigned int edge_indices[4] = {year,flavor,anti,0};
-				NeutrinoEnergyEdges = eff_area.GetEdge(edge_indices);
-				edge_indices[3] = 1;
-				CosZenithEdges = eff_area.GetEdge(edge_indices);
-				edge_indices[3] = 2;
-				EnergyProxyEdges = eff_area.GetEdge(edge_indices);
-
+				detcorr = conv_flux->GetDetCorr(&year);
+				flux = conv_flux->GetFlux(&anti);
 
 
 				//Loop over true energy bins.
@@ -377,7 +379,9 @@ std::vector<double> Verosimilitud::Likelihood()
 						unsigned int exp_indices[2]={ep,z};
 
 						double last=expectation->Index(exp_indices);
-						expectation->SetIndex(exp_indices,last+FluxIntegral*EffAreaVal*livetime*DomCorr);
+						double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr;
+
+						expectation->SetIndex(exp_indices,current);
 						countsheep+=FluxIntegral*EffAreaVal*livetime*DomCorr;
 	
 					}
@@ -412,76 +416,73 @@ std::vector<double> Verosimilitud::Likelihood()
 
 }
 
+
+std::vector<double> Verosimilitud::Likelihood(void)
+{
+	std::cout << "LIK" << std::endl;
+	unsigned int indices[2];
+	double scalar_exp;
+	double scalar_data;
+	double llh=0;
+	double sllh=0;
+	int count=0;
+	double prob;
+	for(unsigned int ep=0; ep<EnergyProxyBins; ep++)
+   	{
+		for(unsigned int z=0; z<CosZenithBins; z++)
+		{
+			indices[0]=ep;
+			indices[1]=z;
+            scalar_exp=expectation->Index(indices);
+			scalar_data=data->Index(indices);
+	std::cout << "LIK" << std::endl;
+			prob = LogPoissonProbability(scalar_data,scalar_exp);
+			if (std::isnan(prob))
+			{
+				prob=0;
+			}
+			llh+=prob;
+			count++;
+			std::cout <<"LLH: "<< llh << std::endl;
+			std::cout << "COUNT: " << count << " / " << EnergyProxyBins*CosZenithBins << std::endl;
+		}
+	}	
+
+
+	for(unsigned int ep=0; ep<EnergyProxyBins; ep++)
+   	{
+		for(unsigned int z=0; z<CosZenithBins; z++)
+		{
+			indices[0]=ep;
+			indices[1]=z;
+			scalar_data=data->Index(indices);
+			double satprob;
+			satprob=LogPoissonProbability(scalar_data,scalar_data);
+			if (std::isnan(satprob))
+			{
+				satprob=0;
+			}
+			sllh+=satprob;
+		}
+	}	
+
+
+	std::vector<double> retvec(2,0);
+	retvec[0]=2*fabs(llh-sllh);
+	retvec[1]=EnergyProxyBins*CosZenithBins;	
+				
+	return retvec;
+}
+
+
+
 int main(void)
 {
 
-
-//Verosimilitud v(3);
-/*
-
-
-for (int i=0; i<cosz.size(); i++)
-{
-//	std::cout << cosz[i] << std::endl;
-}
-*/
-    EffectiveArea eff_area = EffectiveArea();
-    unsigned int CosZenithBins=11;
-    unsigned int EnergyProxyBins=50;
-	Tensor* NeutrinoEnergyEdges;
-	Tensor* CosZenithEdges;
-	Tensor* EnergyProxyEdges;
-	unsigned int edge_indices[4] = {0,0,0,0};
-	edge_indices[3] = 1;
-	CosZenithEdges = eff_area.GetEdge(edge_indices);
-	edge_indices[3] = 2;
-	EnergyProxyEdges = eff_area.GetEdge(edge_indices);
-
-
-
-ICData icd(CosZenithEdges,EnergyProxyEdges);
-std::cout << "SHEEP" << std::endl;
-icd.OpenCSV("observed_events.dat");
-std::vector<unsigned int> cosz(CosZenithBins,0);
-std::vector<unsigned int> eprox(EnergyProxyBins,0);
-icd.ReadCSV();
-std::cout << "SHEEP" << std::endl;
-icd.BinData(&cosz,&eprox);
-std::cout << cosz.size() << std::endl;
-
-	for (unsigned int i=0; i<cosz.size(); i++)
-	{
-		std::cout << cosz[i] << std::endl;
-	}
-/*
-	for (unsigned int i=0; i<eprox.size(); i++)
-	{
-		std::cout << eprox[i] << std::endl;
-	}
-*/
-
-
-/*
-unsigned int indices[3]={0,0,0};
-for(unsigned int i=0;i<dims[2];i++)
-{
-	for(unsigned int j=0;j<dims[1];j++)
-	{
-		for(unsigned int k=0;k<dims[0];k++)
-		{
-			indices[0]=k;
-			indices[1]=j;
-			indices[2]=i;
-			std::cout << "VALUE " << sheep->Index(indices)<< std::endl;
-			std::cout << indices[0]<<","<<indices[1]<<","<<indices[2]<< std::endl;
-			
-		}
-	}
-}
-*/
-//	v.Likelihood();
-
-
+	Verosimilitud v(3);
+	v.CalculateExpectation();
+	std::vector<double> retvec = v.Likelihood();	
+	std::cout << retvec[0] << std::endl;
 
 	return 0;
 }

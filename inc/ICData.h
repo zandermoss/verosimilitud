@@ -12,12 +12,13 @@
 class ICData
 {
 	public:
-		ICData(Tensor* t_cosz_edges, Tensor* t_eprox_edges);
+		ICData(Tensor* t_eprox_edges, Tensor* t_cosz_edges);
 		~ICData();
 
 		void ReadCSV(void);
 		void OpenCSV(std::string filename);
-		void BinData(std::vector<unsigned int>* cosz_binned, std::vector<unsigned int>* eprox_binned);
+		void BinData(std::vector<unsigned int>* eprox_binned, std::vector<unsigned int>* cosz_binned);
+		void BinData(Tensor* binned_data);
 
 	private:
 		std::ifstream datafile;
