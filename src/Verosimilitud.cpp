@@ -134,6 +134,10 @@ int main(void){
     CosZenithEdges = eff_area->GetEdge(edge_indices);
     edge_indices[3] = 2;
     EnergyProxyEdges = eff_area->GetEdge(edge_indices);
+	unsigned int ind1 = 6;
+	unsigned int ind2 = EnergyProxyBins-17;
+	std::cout << "EDGE 6 " << EnergyProxyEdges->Index(&ind1) << std::endl;
+	std::cout << "EDGE FINAL  " << EnergyProxyEdges->Index(&ind2) << std::endl;
 	icd = new ICData(EnergyProxyEdges, CosZenithEdges);
 	icd->OpenCSV("observed_events.dat");
 	//std::vector<unsigned int> data_cosz(CosZenithBins,0);
@@ -155,6 +159,29 @@ int main(void){
 
 	(*cosz_cuts)[0]=0;
 	(*cosz_cuts)[1]=CosZenithBins;
+
+
+	//calculate bin centers
+
+	eprox_centers = new std::vector<double>(EnergyProxyBins,0);
+	coszenith_centers = new std::vector<double>(CosZenithBins,0);
+	unsigned int ip1;
+
+	for (unsigned int i=0; i<EnergyProxyBins; i++)
+	{
+		ip1=i+1;
+		(*eprox_centers)[i] = (EnergyProxyEdges->Index(&i)+EnergyProxyEdges->Index(&ip1))/2.0;
+	}
+
+	for (unsigned int i; i<CosZenithBins; i++)
+	{
+		ip1=i+1;
+		(*coszenith_centers)[i] = (CosZenithEdges->Index(&i)+CosZenithEdges->Index(&ip1))/2.0;
+	}
+	
+
+
+
 	}
 
 
@@ -193,6 +220,8 @@ int main(void){
 			delete icd;
 			delete eprox_cuts;
 			delete cosz_cuts;
+			delete eprox_centers;
+			delete coszenith_centers;
 		}
 	
         void Verosimilitud::SetDecayStructure(std::vector<std::vector<double> > my_dcy_lambda)
@@ -433,8 +462,8 @@ std::vector<double> Verosimilitud::CalculateExpectation()
 	double* coszenith_edges_array = CosZenithEdges->GetDataPointer();
 	unsigned int coszenith_size= CosZenithEdges->GetDataLength();
 
-	eprox_edges=new std::vector<double>(eprox_edges_array, eprox_edges_array+eprox_size);
-	coszenith_edges = new std::vector<double>(coszenith_edges_array, coszenith_edges_array+coszenith_size);
+	//eprox_edges=new std::vector<double>(eprox_edges_array, eprox_edges_array+eprox_size);
+	//coszenith_edges = new std::vector<double>(coszenith_edges_array, coszenith_edges_array+coszenith_size);
 
 
 	double * exparray = expectation->GetDataPointer();
@@ -454,9 +483,91 @@ std::vector<double> Verosimilitud::CalculateExpectation()
 }
 
 
-std::vector<double> Verosimilitud::Likelihood(void)
+/*
+std::vector<double> Verosimilitud::Likelihood_MinNuisance(std::vector<double>* param)
 {
-	std::cout << "LIK" << std::endl;
+//Minimize over nuisance parameters. 
+
+
+gamma=0.05
+for epi in range(6,34):
+    perturbed_expectation[epi] = n0*expectation[epi]*np.power(ep_centers[epi]/34592.,gamma)
+
+chi2 = []
+for n0 in [0.5,0.6,0.7,0.8,0.9,0.99,1.,1.01,1.1,1.2,1.3,1.4,1.5]:
+    perturbed_expectation = n0*expectation
+
+    LogLikelihood = np.sum([np.sum(map(lambda args:poisson.logpmf(*args),zip(datahistogram[epi],perturbed_expectation[epi])))
+                 for epi in range(6,34)])
+
+    # 40% gaussian prior center at 1.
+    LogLikelihood += norm.logpdf(n0, loc=1., scale=0.40)
+    # prior on gamma
+    LogLikelihood += norm.logpdf(gamma, loc=0., scale=0.03)
+    
+    chi2.append(np.abs(2.*(LogLikelihood-SaturatedLikelihood)))
+
+
+  size_t iter = 0;
+  int status;
+
+  const gsl_multimin_fdfminimizer_type *T;
+  gsl_multimin_fdfminimizer *s;
+
+  double par[5] = { 1.0, 2.0, 10.0, 20.0, 30.0 };
+
+  gsl_vector *x;
+  gsl_multimin_function_fdf my_func;
+
+  my_func.n = 2;
+  my_func.f = my_f;
+  my_func.df = my_df;
+  my_func.fdf = my_fdf;
+  my_func.params = par;
+
+  x = gsl_vector_alloc (2);
+  gsl_vector_set (x, 0, 5.0);
+  gsl_vector_set (x, 1, 7.0);
+
+  T = gsl_multimin_fdfminimizer_conjugate_fr;
+  s = gsl_multimin_fdfminimizer_alloc (T, 2);
+
+  gsl_multimin_fdfminimizer_set (s, &my_func, x, 0.01, 1e-4);
+
+  do
+    {
+      iter++;
+      status = gsl_multimin_fdfminimizer_iterate (s);
+
+      if (status)
+        break;
+
+      status = gsl_multimin_test_gradient (s->gradient, 1e-3);
+
+      if (status == GSL_SUCCESS)
+        printf ("Minimum found at:\n");
+
+      printf ("%5d %.5f %.5f %10.5f\n", iter,
+              gsl_vector_get (s->x, 0), 
+              gsl_vector_get (s->x, 1), 
+              s->f);
+
+    }
+  while (status == GSL_CONTINUE && iter < 100);
+
+  gsl_multimin_fdfminimizer_free (s);
+  gsl_vector_free (x);
+
+  return 0;
+}
+
+*/
+
+
+
+
+std::vector<double> Verosimilitud::Likelihood(std::vector<double>* nuisance_param)
+{
 	unsigned int indices[2];
 	double scalar_exp;
 	double scalar_data;
@@ -464,46 +575,9 @@ std::vector<double> Verosimilitud::Likelihood(void)
 	double sllh=0;
 	int count=0;
 	double prob;
+	double pert_scalar_exp;
 
-	double totcount=0;
-
-	std::vector<double> eprox_vec(EnergyProxyBins,0);	
-	for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
-   	{
-		for(unsigned int z=(*cosz_cuts)[0]; z<(*cosz_cuts)[1]; z++)
-		{
-			indices[0]=ep;
-			indices[1]=z;
-            scalar_exp=expectation->Index(indices);
-			//scalar_data=data->Index(indices);
-			eprox_vec[ep]+=scalar_exp;
-			totcount+=scalar_exp;
-		}
-
-
-		std::cout<< eprox_vec[ep] <<std::endl;
-	}
-	
-		std::cout << "TOT: " << totcount << std::endl;
-		std::cout<< "COSZ: " <<std::endl;
-			
-	std::vector<double> cosz_vec(CosZenithBins,0);	
-	for(unsigned int z=(*cosz_cuts)[0]; z<(*cosz_cuts)[1]; z++)
-	{
-		for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
-   		{
-			indices[0]=ep;
-			indices[1]=z;
-            scalar_exp=expectation->Index(indices);
-			//scalar_data=data->Index(indices);
-			cosz_vec[z]+=scalar_exp;
-		}
-
-
-		std::cout<< cosz_vec[z] <<std::endl;
-	}
-	
-	
+	//Calculate unsaturated log-likelihood with nuisance-perturbed expectation
 
 	for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
    	{
@@ -513,19 +587,25 @@ std::vector<double> Verosimilitud::Likelihood(void)
 			indices[1]=z;
             scalar_exp=expectation->Index(indices);
 			scalar_data=data->Index(indices);
-	//std::cout << "LIK" << std::endl;
-			prob = LogPoissonProbability(scalar_data,scalar_exp);
+			pert_scalar_exp=(*nuisance_param)[0]*scalar_exp*pow((*eprox_centers)[ep]/34592.0,(*nuisance_param)[1]); // Fixme what is 34592 number?
+			prob = LogPoissonProbability(scalar_data,pert_scalar_exp);
 			if (std::isnan(prob))
 			{
 				prob=0;
 			}
 			llh+=prob;
+			std::cout << "prob: " << prob << std::endl;
 			count++;
 			//std::cout <<"LLH: "<< llh << std::endl;
 			//std::cout << "COUNT: " << count << " / " << ((*eprox_cuts)[1]-(*eprox_cuts)[0])*((*cosz_cuts)[1]-(*cosz_cuts)[0]) << std::endl;
 		}
 	}	
 
+	llh+=LogGaussianProbability((*nuisance_param)[0],norm_mean,norm_sigma);
+	llh+=LogGaussianProbability((*nuisance_param)[1],gamma_mean,gamma_sigma);
+
+
+	//Calculate saturated log-likelihood
 
 	for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
    	{
@@ -541,9 +621,14 @@ std::vector<double> Verosimilitud::Likelihood(void)
 				satprob=0;
 			}
 			sllh+=satprob;
+
+			std::cout << "Satprob: " << satprob << std::endl;
 		}
 	}	
 
+
+
+	//std::cout << "SAT LIKE: " << sllh << std::endl;
 
 	std::vector<double> retvec(2,0);
 	retvec[0]=2*fabs(llh-sllh);
@@ -563,15 +648,21 @@ int main(void)
 	std::vector<double> my_cosz_cuts(2,0);
 	
 	my_eprox_cuts[0]=6;
-	my_eprox_cuts[1]=v.EnergyProxyBins-18;
+	my_eprox_cuts[1]=v.EnergyProxyBins-16;
 
 	v.SetEproxCuts(my_eprox_cuts);
 
 	
 
 	v.CalculateExpectation();
-	std::vector<double> retvec = v.Likelihood();	
+
+	std::vector<double> nuisance_params(2,0);
+	nuisance_params[0]=2; //set norm to one, leave gamma at zero
+
+
+	std::vector<double> retvec = v.Likelihood(&nuisance_params);	
 	std::cout << retvec[0] << std::endl;
+	std::cout << retvec[1] << std::endl;
 
 	return 0;
 }

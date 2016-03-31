@@ -30,8 +30,11 @@ class Verosimilitud {
 		std::vector<unsigned int> GetExpDims(void);
 		std::vector<double> GetEproxEdges(void);
 		std::vector<double> GetCosZenithEdges(void);
-		std::vector<double> Likelihood(void);
 		std::vector<double> CalculateExpectation(void);
+
+
+		//std::vector<double> Likelihood_MinNuisance(std::vector<double>* param)
+		std::vector<double> Likelihood(std::vector<double>* param);
 
 
 		void SetEproxCuts(std::vector<double> cuts);
@@ -44,6 +47,10 @@ class Verosimilitud {
 		
 
 	protected:
+
+		void CalculatePerturbedExpectation(std::vector<double>* param, Tensor* perturbed_expectation);
+
+
     	std::vector<double>  pp;
     	std::vector<double>  np;
    		
@@ -73,6 +80,10 @@ class Verosimilitud {
 		std::vector<double>* eprox_edges;
 		std::vector<double>* coszenith_edges;
 
+		std::vector<double>* eprox_centers;
+		std::vector<double>* coszenith_centers;
+
+
 		Tensor* expectation;
 
 
@@ -98,6 +109,13 @@ class Verosimilitud {
 		std::vector<double>* eprox_cuts;
 		std::vector<double>* cosz_cuts;
 	
+//Nuisance parameters:
+
+	double norm_mean=1;
+	double norm_sigma=0.4;
+	double gamma_mean=0;
+	double gamma_sigma=0.03;
+
 
 
    

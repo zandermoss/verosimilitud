@@ -13,7 +13,7 @@ double LogPoissonProbability(unsigned int x,double mu) // simple poisson functio
 
 double LogGaussianProbability(double x,double mu,double sigma) // gaussian probability
 {
-    return -log(sigma) -log2pi -0.5*pow((x-mu)/sigma,2);
+    return -log(sigma) -log2pi/2.0 -0.5*pow((x-mu)/sigma,2);
 }
 
 void PrintArray(std::vector<double> array) 
