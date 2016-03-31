@@ -34,7 +34,8 @@ class Verosimilitud {
 
 
 		//std::vector<double> Likelihood_MinNuisance(std::vector<double>* param)
-		std::vector<double> Likelihood(std::vector<double>* param);
+		double Likelihood(std::vector<double>* param);
+		void LikelihoodGradient(std::vector<double>* param, std::vector<double>* grad);
 
 
 		void SetEproxCuts(std::vector<double> cuts);

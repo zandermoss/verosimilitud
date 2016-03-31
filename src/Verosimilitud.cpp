@@ -566,7 +566,7 @@ for n0 in [0.5,0.6,0.7,0.8,0.9,0.99,1.,1.01,1.1,1.2,1.3,1.4,1.5]:
 
 
 
-std::vector<double> Verosimilitud::Likelihood(std::vector<double>* nuisance_param)
+double Verosimilitud::Likelihood(std::vector<double>* nuisance_param)
 {
 	unsigned int indices[2];
 	double scalar_exp;
@@ -577,7 +577,7 @@ std::vector<double> Verosimilitud::Likelihood(std::vector<double>* nuisance_para
 	double prob;
 	double pert_scalar_exp;
 
-	//Calculate unsaturated log-likelihood with nuisance-perturbed expectation
+	//calculate unsaturated log-likelihood with nuisance-perturbed expectation
 
 	for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
    	{
@@ -587,7 +587,7 @@ std::vector<double> Verosimilitud::Likelihood(std::vector<double>* nuisance_para
 			indices[1]=z;
             scalar_exp=expectation->Index(indices);
 			scalar_data=data->Index(indices);
-			pert_scalar_exp=(*nuisance_param)[0]*scalar_exp*pow((*eprox_centers)[ep]/34592.0,(*nuisance_param)[1]); // Fixme what is 34592 number?
+			pert_scalar_exp=(*nuisance_param)[0]*scalar_exp*pow((*eprox_centers)[ep]/34592.0,(*nuisance_param)[1]); // fixme what is 34592 number?
 			prob = LogPoissonProbability(scalar_data,pert_scalar_exp);
 			if (std::isnan(prob))
 			{
@@ -596,8 +596,8 @@ std::vector<double> Verosimilitud::Likelihood(std::vector<double>* nuisance_para
 			llh+=prob;
 			std::cout << "prob: " << prob << std::endl;
 			count++;
-			//std::cout <<"LLH: "<< llh << std::endl;
-			//std::cout << "COUNT: " << count << " / " << ((*eprox_cuts)[1]-(*eprox_cuts)[0])*((*cosz_cuts)[1]-(*cosz_cuts)[0]) << std::endl;
+			//std::cout <<"llh: "<< llh << std::endl;
+			//std::cout << "count: " << count << " / " << ((*eprox_cuts)[1]-(*eprox_cuts)[0])*((*cosz_cuts)[1]-(*cosz_cuts)[0]) << std::endl;
 		}
 	}	
 
@@ -625,17 +625,72 @@ std::vector<double> Verosimilitud::Likelihood(std::vector<double>* nuisance_para
 			std::cout << "Satprob: " << satprob << std::endl;
 		}
 	}	
-
-
-
-	//std::cout << "SAT LIKE: " << sllh << std::endl;
-
-	std::vector<double> retvec(2,0);
-	retvec[0]=2*fabs(llh-sllh);
-	retvec[1]=((*eprox_cuts)[1]-(*eprox_cuts)[0])*((*cosz_cuts)[1]-(*cosz_cuts)[0]);
+	
 				
-	return retvec;
+	return 2*(sllh-llh);
 }
+
+
+
+
+
+
+
+
+
+void Verosimilitud::LikelihoodGradient(std::vector<double>* nuisance_param, std::vector<double>* grad)
+{
+	unsigned int indices[2];
+	double scalar_exp;
+	double scalar_data;
+	double pert_scalar_exp;
+
+	double norm = (*nuisance_param)[0];
+	double gamma = (*nuisance_param)[1];
+
+	double center;
+	
+	double grad0=0;
+	double grad1=0;
+
+	double strange_constant=34592.0;
+
+	for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
+   	{
+		center=(*eprox_centers)[ep];
+		for(unsigned int z=(*cosz_cuts)[0]; z<(*cosz_cuts)[1]; z++)
+		{
+			indices[0]=ep;
+			indices[1]=z;
+            scalar_exp=expectation->Index(indices);
+			scalar_data=data->Index(indices);
+			pert_scalar_exp=norm*scalar_exp*pow(center/strange_constant,gamma); // fixme what is 34592 number?
+			if(!(std::isnan(LogPoissonProbability(scalar_data,pert_scalar_exp))))
+			{
+				grad0+=(1- scalar_data/pert_scalar_exp)*scalar_exp*pow(center/strange_constant,gamma);
+				grad1+=(1- scalar_data/pert_scalar_exp)*norm*scalar_exp*log(center/strange_constant)*pow(center/strange_constant,gamma);
+			}
+
+		}
+	}	
+
+	grad0+=(norm-norm_mean)/pow(norm_sigma,2);
+	grad1+=(gamma-gamma_mean)/pow(gamma_sigma,2);
+
+	grad0*=2;
+	grad1*=2;
+
+	(*grad)[0]=grad0;
+	(*grad)[1]=grad1;
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -656,13 +711,31 @@ int main(void)
 
 	v.CalculateExpectation();
 
+	double delta=0.000001;
+
 	std::vector<double> nuisance_params(2,0);
-	nuisance_params[0]=2; //set norm to one, leave gamma at zero
+	nuisance_params[0]=0.75; //set norm to one, leave gamma at zero
+	nuisance_params[1]=0.5;
+	double ret1 = v.Likelihood(&nuisance_params);	
+	std::vector<double> retvec(2,0);
+	v.LikelihoodGradient(&nuisance_params,&retvec);	
+
+	nuisance_params[0]=0.75; //set norm to one, leave gamma at zero
+	nuisance_params[1]=0.5+delta;
+	double ret2= v.Likelihood(&nuisance_params);	
+
+	std::cout << "Approx: " << (ret2-ret1)/delta << std::endl;
+	std::cout << "gradGapp: " << retvec[1] << std::endl;
+	std::cout << "DIFF: " << (ret2-ret1)/delta - retvec[1] << std::endl;
 
 
-	std::vector<double> retvec = v.Likelihood(&nuisance_params);	
-	std::cout << retvec[0] << std::endl;
-	std::cout << retvec[1] << std::endl;
+
+
+
+
+
+
+
 
 	return 0;
 }
