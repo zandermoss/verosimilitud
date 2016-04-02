@@ -367,6 +367,11 @@ std::vector<unsigned int> Verosimilitud::GetExpDims()
 	return exp_dimvec;
 }
 
+std::vector<unsigned int> Verosimilitud::GetDataDims()
+{
+	return dat_dimvec;
+}
+
 std::vector<double> Verosimilitud::GetEproxEdges()
 {
 	return *eprox_edges;
@@ -485,6 +490,118 @@ std::vector<double> Verosimilitud::CalculateExpectation()
 	return expvec;
 
 }
+
+
+std::vector<double> Verosimilitud::GetExpectationVec(void)
+{
+	double * exparray = expectation->GetDataPointer();
+	unsigned int explen = expectation->GetDataLength();
+	std::vector<double> expvec(exparray, exparray + explen);
+	unsigned int expdims[]={0,0};
+	expectation->GetDims(expdims);
+	exp_dimvec.push_back(expdims[0]);
+	exp_dimvec.push_back(expdims[1]);
+	return expvec;
+}
+
+
+std::vector<double> Verosimilitud::GetExpectationVec(std::vector<double> nuisance)
+{
+	unsigned int indices[2];
+	double scalar_exp;
+	double pert_scalar_exp;
+
+	double norm=nuisance[0];
+	double gamma=nuisance[1];
+
+
+    unsigned int exp_dims[2]={EnergyProxyBins,CosZenithBins};
+    perturbed_expectation = new Tensor(2,exp_dims,0);
+
+
+
+   for(unsigned int ep=0; ep<EnergyProxyBins; ep++)
+    {
+        for(unsigned int z=0; z<CosZenithBins; z++)
+        {
+            indices[0]=ep;
+            indices[1]=z;
+            scalar_exp=expectation->Index(indices);
+            pert_scalar_exp=norm*scalar_exp*pow((*eprox_centers)[ep]/34592.0,gamma); // fixme what is 34592 number?
+			perturbed_expectation->SetIndex(indices,pert_salar_exp);
+        }
+    }
+
+
+
+
+	double * exparray = perturbed_expectation->GetDataPointer();
+	unsigned int explen = perturbed_expectation->GetDataLength();
+	std::vector<double> expvec(exparray, exparray + explen);
+	unsigned int expdims[]={0,0};
+	perturbed_expectation->GetDims(expdims);
+	exp_dimvec.push_back(expdims[0]);
+	exp_dimvec.push_back(expdims[1]);
+	delete perturbed_expectation;
+	return expvec;
+}
+
+
+
+std::vector<double> Verosimilitud::GetDataVec(void)
+{
+	double * datarray = data->GetDataPointer();
+	unsigned int datlen = data->GetDataLength();
+	std::vector<double> datvec(datarray, datarray + datlen);
+	unsigned int datdims[]={0,0};
+	data->GetDims(datdims);
+	dat_dimvec.push_back(datdims[0]);
+	dat_dimvec.push_back(datdims[1]);
+	return datvec;
+}
+
+
+std::vector<double> Verosimilitud::GetDataVec(double scale)
+{
+   unsigned int indices[2];
+    double pert_scalar_data;
+    double scalar_data;
+
+
+    unsigned int exp_dims[2]={EnergyProxyBins,CosZenithBins};
+    perturbed_data = new Tensor(2,exp_dims,0);
+
+
+   
+   for(unsigned int ep=0; ep<EnergyProxyBins; ep++)
+    {
+        for(unsigned int z=0; z<CosZenithBins; z++)
+        {
+            indices[0]=ep;
+            indices[1]=z;
+            scalar_data=data->Index(indices);
+            pert_scalar_data=scale*scalar_data; // fixme what is 34592 number?
+            perturbed_data->SetIndex(indices,pert_salar_data);
+        }
+    }
+
+
+
+	double * datarray = perturbed_data->GetDataPointer();
+	unsigned int datlen = perturbed_data->GetDataLength();
+	std::vector<double> datvec(datarray, datarray + datlen);
+	unsigned int datdims[]={0,0};
+	perturbed_data->GetDims(datdims);
+	dat_dimvec.push_back(datdims[0]);
+	dat_dimvec.push_back(datdims[1]);
+	delete perturbed_data;
+
+	return datvec;
+
+}
+
+
+
 
 
 
