@@ -9,6 +9,11 @@
 #include "EffectiveArea.h"
 #include "ICData.h"
 #include "ConventionalFlux.h"
+#include <functional>
+
+#include <dlib/optimization.h>
+
+
 
 class Verosimilitud {
 
@@ -33,9 +38,12 @@ class Verosimilitud {
 		std::vector<double> CalculateExpectation(void);
 
 
-		//std::vector<double> Likelihood_MinNuisance(std::vector<double>* param)
-		double Likelihood(std::vector<double>* param);
-		void LikelihoodGradient(std::vector<double>* param, std::vector<double>* grad);
+
+
+
+		double Chi2MinNuisance(std::vector<double> * nuisance);
+		double Chi2(const dlib::matrix<double,0,1>& nuisance);
+		dlib::matrix<double,0,1> Chi2Gradient(const dlib::matrix<double,0,1>& nuisance);
 
 
 		void SetEproxCuts(std::vector<double> cuts);
@@ -49,7 +57,6 @@ class Verosimilitud {
 
 	protected:
 
-		void CalculatePerturbedExpectation(std::vector<double>* param, Tensor* perturbed_expectation);
 
 
     	std::vector<double>  pp;
@@ -124,5 +131,50 @@ class Verosimilitud {
     
 //	   Set_simulation()
 };
+
+
+
+		class Chi2_caller
+		{
+			private:
+				Verosimilitud* my_verosim;
+			public:
+				Chi2_caller(Verosimilitud * verosim)
+				{
+					my_verosim = verosim;
+				}
+
+
+				double operator() (const dlib::matrix<double,0,1>& nuisance) const
+				{
+					return my_verosim->Chi2(nuisance);
+				}
+
+		};
+
+
+
+
+		class Chi2grad_caller
+		{
+			private:
+				Verosimilitud* my_verosim;
+			public:
+
+				Chi2grad_caller(Verosimilitud * verosim)
+				{
+					my_verosim = verosim;
+				}
+
+
+				dlib::matrix<double,0,1> operator() (const dlib::matrix<double,0,1>& nuisance) const
+				{
+					return my_verosim->Chi2Gradient(nuisance);
+				}
+
+		};
+
+
+
 
 #endif // __VEROSIMILILTUD_H_INCLUDED__

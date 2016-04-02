@@ -11,6 +11,10 @@
 #include <cmath>
 #include <cfloat>
 
+#include <dlib/optimization.h>
+#include <dlib/member_function_pointer.h>
+
+
 /*
 //From effective_area_demo.c
 #include <math.h>
@@ -483,90 +487,29 @@ std::vector<double> Verosimilitud::CalculateExpectation()
 }
 
 
-/*
-std::vector<double> Verosimilitud::Likelihood_MinNuisance(std::vector<double>* param)
+
+
+double Verosimilitud::Chi2MinNuisance(std::vector<double>* param)
 {
 //Minimize over nuisance parameters. 
 
-
-gamma=0.05
-for epi in range(6,34):
-    perturbed_expectation[epi] = n0*expectation[epi]*np.power(ep_centers[epi]/34592.,gamma)
-
-chi2 = []
-for n0 in [0.5,0.6,0.7,0.8,0.9,0.99,1.,1.01,1.1,1.2,1.3,1.4,1.5]:
-    perturbed_expectation = n0*expectation
-
-    LogLikelihood = np.sum([np.sum(map(lambda args:poisson.logpmf(*args),zip(datahistogram[epi],perturbed_expectation[epi])))
-                 for epi in range(6,34)])
-
-    # 40% gaussian prior center at 1.
-    LogLikelihood += norm.logpdf(n0, loc=1., scale=0.40)
-    # prior on gamma
-    LogLikelihood += norm.logpdf(gamma, loc=0., scale=0.03)
-    
-    chi2.append(np.abs(2.*(LogLikelihood-SaturatedLikelihood)))
+  dlib::matrix<double,0,1> nuisance(2);
+  nuisance(0)=(*param)[0];
+  nuisance(1)=(*param)[1];
 
 
-  size_t iter = 0;
-  int status;
+  dlib::find_min(dlib::bfgs_search_strategy(), dlib::objective_delta_stop_strategy(1e-7),Chi2_caller(this),Chi2grad_caller(this),nuisance,-1);
 
-  const gsl_multimin_fdfminimizer_type *T;
-  gsl_multimin_fdfminimizer *s;
-
-  double par[5] = { 1.0, 2.0, 10.0, 20.0, 30.0 };
-
-  gsl_vector *x;
-  gsl_multimin_function_fdf my_func;
-
-  my_func.n = 2;
-  my_func.f = my_f;
-  my_func.df = my_df;
-  my_func.fdf = my_fdf;
-  my_func.params = par;
-
-  x = gsl_vector_alloc (2);
-  gsl_vector_set (x, 0, 5.0);
-  gsl_vector_set (x, 1, 7.0);
-
-  T = gsl_multimin_fdfminimizer_conjugate_fr;
-  s = gsl_multimin_fdfminimizer_alloc (T, 2);
-
-  gsl_multimin_fdfminimizer_set (s, &my_func, x, 0.01, 1e-4);
-
-  do
-    {
-      iter++;
-      status = gsl_multimin_fdfminimizer_iterate (s);
-
-      if (status)
-        break;
-
-      status = gsl_multimin_test_gradient (s->gradient, 1e-3);
-
-      if (status == GSL_SUCCESS)
-        printf ("Minimum found at:\n");
-
-      printf ("%5d %.5f %.5f %10.5f\n", iter,
-              gsl_vector_get (s->x, 0), 
-              gsl_vector_get (s->x, 1), 
-              s->f);
-
-    }
-  while (status == GSL_CONTINUE && iter < 100);
-
-  gsl_multimin_fdfminimizer_free (s);
-  gsl_vector_free (x);
-
-  return 0;
+  (*param)[0]=nuisance(0);
+  (*param)[1]=nuisance(1);
+	return Chi2(nuisance);
 }
 
-*/
 
 
 
 
-double Verosimilitud::Likelihood(std::vector<double>* nuisance_param)
+double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 {
 	unsigned int indices[2];
 	double scalar_exp;
@@ -576,6 +519,12 @@ double Verosimilitud::Likelihood(std::vector<double>* nuisance_param)
 	int count=0;
 	double prob;
 	double pert_scalar_exp;
+
+
+
+	const double norm = nuisance(0);
+	const double gamma = nuisance(1);
+
 
 	//calculate unsaturated log-likelihood with nuisance-perturbed expectation
 
@@ -587,22 +536,21 @@ double Verosimilitud::Likelihood(std::vector<double>* nuisance_param)
 			indices[1]=z;
             scalar_exp=expectation->Index(indices);
 			scalar_data=data->Index(indices);
-			pert_scalar_exp=(*nuisance_param)[0]*scalar_exp*pow((*eprox_centers)[ep]/34592.0,(*nuisance_param)[1]); // fixme what is 34592 number?
+			pert_scalar_exp=norm*scalar_exp*pow((*eprox_centers)[ep]/34592.0,gamma); // fixme what is 34592 number?
 			prob = LogPoissonProbability(scalar_data,pert_scalar_exp);
 			if (std::isnan(prob))
 			{
 				prob=0;
 			}
 			llh+=prob;
-			std::cout << "prob: " << prob << std::endl;
 			count++;
 			//std::cout <<"llh: "<< llh << std::endl;
 			//std::cout << "count: " << count << " / " << ((*eprox_cuts)[1]-(*eprox_cuts)[0])*((*cosz_cuts)[1]-(*cosz_cuts)[0]) << std::endl;
 		}
 	}	
 
-	llh+=LogGaussianProbability((*nuisance_param)[0],norm_mean,norm_sigma);
-	llh+=LogGaussianProbability((*nuisance_param)[1],gamma_mean,gamma_sigma);
+	llh+=LogGaussianProbability(norm,norm_mean,norm_sigma);
+	llh+=LogGaussianProbability(gamma,gamma_mean,gamma_sigma);
 
 
 	//Calculate saturated log-likelihood
@@ -622,7 +570,6 @@ double Verosimilitud::Likelihood(std::vector<double>* nuisance_param)
 			}
 			sllh+=satprob;
 
-			std::cout << "Satprob: " << satprob << std::endl;
 		}
 	}	
 	
@@ -638,20 +585,21 @@ double Verosimilitud::Likelihood(std::vector<double>* nuisance_param)
 
 
 
-void Verosimilitud::LikelihoodGradient(std::vector<double>* nuisance_param, std::vector<double>* grad)
+dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0,1>& nuisance)
 {
 	unsigned int indices[2];
 	double scalar_exp;
 	double scalar_data;
 	double pert_scalar_exp;
 
-	double norm = (*nuisance_param)[0];
-	double gamma = (*nuisance_param)[1];
+	const double norm = nuisance(0);
+	const double gamma = nuisance(1);
 
 	double center;
 	
 	double grad0=0;
 	double grad1=0;
+
 
 	double strange_constant=34592.0;
 
@@ -680,12 +628,14 @@ void Verosimilitud::LikelihoodGradient(std::vector<double>* nuisance_param, std:
 	grad0*=2;
 	grad1*=2;
 
-	(*grad)[0]=grad0;
-	(*grad)[1]=grad1;
+
+	dlib::matrix<double,0,1> gradient(2);
+
+	gradient(0) = grad0;
+	gradient(1) = grad1;
+
+	return gradient;
 }
-
-
-
 
 
 
@@ -707,35 +657,18 @@ int main(void)
 
 	v.SetEproxCuts(my_eprox_cuts);
 
-	
-
 	v.CalculateExpectation();
 
-	double delta=0.000001;
 
-	std::vector<double> nuisance_params(2,0);
-	nuisance_params[0]=0.75; //set norm to one, leave gamma at zero
-	nuisance_params[1]=0.5;
-	double ret1 = v.Likelihood(&nuisance_params);	
-	std::vector<double> retvec(2,0);
-	v.LikelihoodGradient(&nuisance_params,&retvec);	
-
-	nuisance_params[0]=0.75; //set norm to one, leave gamma at zero
-	nuisance_params[1]=0.5+delta;
-	double ret2= v.Likelihood(&nuisance_params);	
-
-	std::cout << "Approx: " << (ret2-ret1)/delta << std::endl;
-	std::cout << "gradGapp: " << retvec[1] << std::endl;
-	std::cout << "DIFF: " << (ret2-ret1)/delta - retvec[1] << std::endl;
+	std::vector<double> nuisance_init(2,0);
+	nuisance_init[0]=1; //set norm to one, leave gamma at zero
+	nuisance_init[1]=0;
+	double ret = v.Chi2MinNuisance(&nuisance_init);	
 
 
-
-
-
-
-
-
-
+	std::cout << "Chi2: " << ret << std::endl;
+	std::cout << "Norm: " << nuisance_init[0] << std::endl;
+	std::cout << "Gamma: " << nuisance_init[1] << std::endl;
 
 	return 0;
 }

@@ -15,7 +15,7 @@ CFLAGS = -Wall -g -fPIC -std=c++11
 
 # define any directories containing header files other than /usr/include
 #
-INCLUDES = -I ./inc -I/usr/include/python2.7 -I/usr/local/hdf5/include
+INCLUDES = -I ./inc -I/usr/include/python2.7 -I/usr/local/hdf5/include -I/home/pinkpig/src/dlib-18.18
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
@@ -25,7 +25,7 @@ LFLAGS = -L/usr/local/hdf5/lib
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname 
 #   option, something like (this will link in libmylib.so and libm.so:
-LIBS = -lpython2.7 -lm -lhdf5 -lhdf5_cpp
+LIBS = -lpython2.7 -lm -lhdf5 -lhdf5_cpp  
 
 # define the C source files
 #SRCS = src/Verosimilitud.cpp src/Tools.cpp
