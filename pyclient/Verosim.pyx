@@ -50,10 +50,10 @@ cdef class Verosim:
 	def Chi2MinNuisance(self,vector[double] nuisance):
 		return self._c_verosimilitud.Chi2MinNuisance(nuisance)
 
-	def GetDataVec(self,scale):
-		return self._c_verosimilitud.GetDataVec(scale)
-	#def GetDataVec(self):
-	#	return self._c_verosimilitud.GetDataVec()
+	#def GetDataVec(self,scale):
+	#	return self._c_verosimilitud.GetDataVec(scale)
+	def GetDataVec(self):
+		return self._c_verosimilitud.GetDataVec()
 
 	def GetExpectationVec(self,vector[double] nuisance):
 		return self._c_verosimilitud.GetExpectationVec(nuisance)
@@ -62,6 +62,12 @@ cdef class Verosim:
 
 	def SetEproxCuts(self,vector[double] cuts):
 		self._c_verosimilitud.SetEproxCuts(cuts)
+
+	def SetSimpsNIntervals(self,nintervals):
+		self._c_verosimilitud.SetSimpsNIntervals(nintervals)
+
+	def SimpsAvg(self,coszmin, coszmax, emin, emax, anti, nintervals):
+		return self._c_verosimilitud.SimpsAvg(coszmin, coszmax, emin, emax, anti, nintervals)
 
 
 	"""
@@ -74,8 +80,8 @@ cdef class Verosim:
 		self._c_verosimilitud.SetDeSolver(callback,<void*>f)
 		return
 
-	def OscillationProbability(self,energy,zenith):
-		self._c_verosimilitud.OscillationProbability(energy,zenith)
+	def OscillationProbability(self,energy,zenith, anti):
+		self._c_verosimilitud.OscillationProbability(energy,zenith,anti)
 		return
 
 		

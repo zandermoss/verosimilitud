@@ -1,3 +1,5 @@
+#! /usr/bin/python
+
 import Verosim
 import numpy as np
 v=Verosim.Verosim(4)

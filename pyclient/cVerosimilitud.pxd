@@ -12,11 +12,12 @@ cdef extern from "Verosimilitud.h":
 		void SetEproxCuts(vector[double] cuts)
 		void CalculateExpectation()
 		vector[double] Chi2MinNuisance(vector[double] nuisance)
-		vector[double] GetDataVec(double scale)
-		#vector[double] GetDataVec()
+		#vector[double] GetDataVec(double scale)
+		vector[double] GetDataVec()
 		vector[double] GetExpectationVec(vector[double] nuisance)
 		#vector[double] GetExpectationVec()
-
+		double SimpsAvg(double coszmin, double coszmax, double emin, double emax, double anti, int nintervals)
+		void SetSimpsNIntervals(int nintervals)
 
 		vector[double] GetEproxEdges()
 		vector[double] GetCosZenithEdges()
@@ -25,6 +26,6 @@ cdef extern from "Verosimilitud.h":
 		void SetMassStructure(vector[vector[double]] pmns_lambda)
 		void SetDecayEigenvalues(vector[double] dcy_eig)
 		void PrintThing()
-		double OscillationProbability(double energy,double zenith)
+		double OscillationProbability(double energy,double zenith, double anti)
 		void SetDeSolver(pyoscfunc de_solver, void* user_data)
 		

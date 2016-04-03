@@ -23,7 +23,7 @@ class Verosimilitud {
 		~Verosimilitud();
 	    double LogLikelihood(std::vector<double> pp,std::vector<double> np);
 		typedef double (*pyoscfunc)(std::vector<double> argument, void *userdata);
-	    double OscillationProbability(double energy,double zenith);
+	    double OscillationProbability(double energy,double zenith, double anti);
 		void SetDecayStructure(std::vector<std::vector<double> > my_dcy_lambda);
 		void SetDeSolver(pyoscfunc de_solve, void* user_data);
 		void SetMassStructure(std::vector<std::vector<double> > my_pmns_lambda);
@@ -39,16 +39,25 @@ class Verosimilitud {
 		void CalculateExpectation(void);
 
 
-		std::vector<double> GetExpectationVec(void);
+		void SetSimpsNIntervals(int nintervals);
+
+
+
+		//std::vector<double> GetExpectationVec(void);
 		std::vector<double> GetExpectationVec(std::vector<double> nuisance);
 		std::vector<double> GetDataVec(void);
-		std::vector<double> GetDataVec(double scale);
+		//std::vector<double> GetDataVec(double scale);
 
 		
 
 		std::vector<double> Chi2MinNuisance(std::vector<double> nuisance);
 		double Chi2(const dlib::matrix<double,0,1>& nuisance);
 		dlib::matrix<double,0,1> Chi2Gradient(const dlib::matrix<double,0,1>& nuisance);
+
+		double TestFunction(double e, double z, double a);
+
+
+		double SimpsAvg(double coszmin, double coszmax, double emin, double emax, double anti, int nintervals);
 
 
 		void SetEproxCuts(std::vector<double> cuts);
@@ -62,7 +71,7 @@ class Verosimilitud {
 
 	protected:
 
-
+		int simps_nintervals;
 
     	std::vector<double>  pp;
     	std::vector<double>  np;

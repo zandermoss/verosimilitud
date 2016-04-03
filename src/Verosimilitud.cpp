@@ -10,126 +10,20 @@
 #include "ICData.h"
 #include <cmath>
 #include <cfloat>
+#include <math.h>
 
 #include <dlib/optimization.h>
 #include <dlib/member_function_pointer.h>
 
 
-/*
-//From effective_area_demo.c
-#include <math.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-//--------
-*/
-
-/*
-int main(void){
-	
-	const unsigned int neutrinoEnergyBins=280;
-	const unsigned int cosZenithBins=11;
-	const unsigned int energyProxyBins=50;
-	//the edges used for the bins of the effective area histograms
-	//these are the same for all effective areas
-	double* trueEnergyEdges=(double*)malloc((neutrinoEnergyBins+1)*sizeof(double));
-	double* cosZenithEdges=(double*)malloc((cosZenithBins+1)*sizeof(double));
-	double* energyProxyEdges=(double*)malloc((energyProxyBins+1)*sizeof(double));
-	
-	const unsigned int histogramDims[3]={neutrinoEnergyBins,cosZenithBins,energyProxyBins};
-	
-	//the expected distribution of astrophysical events
-	//in the energy proxy observable
-	double* expectation=(double*)malloc(energyProxyBins*sizeof(double));
-	double* expectationUncertainty=(double*)malloc(energyProxyBins*sizeof(double));
-	
-	//a test flux to evaluate
-	powerlawFlux flux;
-	flux.normalization=1.63e-18;
-	flux.index=-2.22;
-	
-	//To compute the expected number of observed events we need to:
-	//1a. Multiply each effective area by the average flux in each bin
-	//1b. Multiply by the phase space in each bin (true energy and solid angle)
-	//1c. Multiply by the livetime for which the effective area is relevant
-	//2. Sum over the effective areas for all particle types and detector configurations
-	//3. Sum over dimensions not of interest (true neutrino energy, possibly zenith angle)
-	//In this case we will compute the expectation as a function of the energy
-	//proxy only, so we will project out both true energy and zenith angle.
-	
-	memset(expectation, 0, energyProxyBins*sizeof(double));
-	memset(expectationUncertainty, 0, energyProxyBins*sizeof(double));
-	unsigned int indices[3];
-	
-	for(unsigned int i=0; i<energyProxyBins; i++){
-		indices[2]=i;
-		//for both years
-		for(unsigned int y=0; y<2; y++){
-			//for each particle type
-			for(unsigned int p=0; p<4; p++){
-				//for each true energy bin
-				for(unsigned int e=0; e<neutrinoEnergyBins; e++){
-					indices[0]=e;
-					
-					double enMin=trueEnergyEdges[e];
-					double enMax=trueEnergyEdges[e+1];
-					
-					//for each cosine zenith angle bin
-					for(unsigned int z=0; z<cosZenithBins; z++){
-						indices[1]=z;
-						
-						double cosZenithMin=cosZenithEdges[z];
-						double cosZenithMax=cosZenithEdges[z+1];
-						
-						//the product of the average flux in the bin and the
-						//phase space in the bin is simply the integral of the
-						//flux over the bin
-						double fluxIntegral=
-						  integratePowerlawFlux(flux,enMin,enMax) //energy intergal
-						  *(cosZenithMax-cosZenithMin) //zenith integral
-						  *2*M_PI; //azimuth integral
-						
-						double effectiveArea=*index_multi(*effectiveAreas[y][p],indices);
-						effectiveArea*=1.0e4; //convert m^2 to cm^2
-						expectation[i] += effectiveArea * fluxIntegral * *livetimes[y];
-						
-						//We can also compute the uncertainty due to limited simulation statistics.
-						//This requires adding the error terms in quadrature.
-						double effectiveAreaErr=*index_multi(*effectiveAreaErrs[y][p],indices);
-						effectiveAreaErr*=1.0e4; //convert m^2 to cm^2
-						effectiveAreaErr*=fluxIntegral * *livetimes[y];
-						effectiveAreaErr*=effectiveAreaErr; //square!
-						expectationUncertainty[i] += effectiveAreaErr;
-					}
-				}
-			}
-		}
-	}
-	
-	//Print out the expected number of events in each energy proxy bin, with
-	//statistical uncertainties.
-	printf("Astrophysical flux expectation as a function of energy proxy\n");
-	double total=0;
-	for(unsigned int i=0; i<energyProxyBins; i++){
-		printf(" %lf: %lf [%lf,%lf]\n",energyProxyEdges[i],expectation[i],
-		       expectation[i]-sqrt(expectationUncertainty[i]),
-		       expectation[i]+sqrt(expectationUncertainty[i]));
-		total+=expectation[i];
-	}
-	printf("Total: %lf\n",total);
-//-----------end effec_area_demo_insertion
-*/
-
-		Verosimilitud::Verosimilitud(unsigned int my_numneu)
-		{
-			numneu=my_numneu;	
-			std::cout << "BLEAT" << std::endl;
+Verosimilitud::Verosimilitud(unsigned int my_numneu)
+{
+	numneu=my_numneu;	
 
 
+	simps_nintervals=4;
 
 	eff_area = new EffectiveArea();
-
 	conv_flux = new ConventionalFlux();
 
     unsigned int edge_indices[4] = {0,0,0,0};
@@ -140,10 +34,10 @@ int main(void){
     EnergyProxyEdges = eff_area->GetEdge(edge_indices);
 	unsigned int ind1 = 6;
 	unsigned int ind2 = EnergyProxyBins-17;
-	std::cout << "EDGE 6 " << EnergyProxyEdges->Index(&ind1) << std::endl;
-	std::cout << "EDGE FINAL  " << EnergyProxyEdges->Index(&ind2) << std::endl;
+
 	icd = new ICData(EnergyProxyEdges, CosZenithEdges);
 	icd->OpenCSV("observed_events.dat");
+
 	//std::vector<unsigned int> data_cosz(CosZenithBins,0);
 	//std::vector<unsigned int> data_eprox(EnergyProxyBins,0);
 	//icd.BinData(&data_cosz,&data_eprox);
@@ -186,8 +80,14 @@ int main(void){
 
 
 
-	}
+}
 
+
+	
+	void Verosimilitud::SetSimpsNIntervals(int nintervals)
+	{
+		simps_nintervals=nintervals;
+	}
 
 	void Verosimilitud::SetCoszCuts(std::vector<double> cuts)
 	{
@@ -278,41 +178,17 @@ int main(void){
 		{
 			PrintMatrix(decay_lambda);
 		}
-/*
-	    double LogLikelihood(std::vector<double> pp,std::vector <double> np)
-		{
-			double mu;
-			double loglike=0;
-			for (unsigned int ei=0; ei<esize; ei++)
-			{
-				for (unsigned int zi=0; zi<zsize; zi++)
-				{
-					mu = Measurement_Interval*Flux(reco_energy[ei],reco_zenith[zi])*
-						X_sec(reco_energy[ei]) * OscProb(reco_energy[ei],reco_zenith[zi]); 
-					
-					loglike+=LogPoissonProbability(data[ei][zi],mu);
-				}
-			}
-	
-			//loglike+=LogNuisancePriors(np); Implement this bayesian behavior in 
-			//a child class: verosimilitud_bayesian
-	
-	        mu[recoenergy][recozenith] = mu(pp,np) = sum_true_energy_true_zenith simulation[recoenergy][recozenith][trueenergy][truezenith];
-	    // sum over each of the bins in marray::data
-	    // here this loop/sum is over recoenergy and recozenith bins
-	        return -sum(LogPoissonProbability(xdata,mu[recoenergy][recozenith])) + sum(LogNuisancePriors);
-	    }
-*/
 
-	    double Verosimilitud::OscillationProbability(double energy,double zenith)
+	    double Verosimilitud::OscillationProbability(double energy,double zenith, double anti)
 		{
 	   	 	//Here we call nusheep. Although, would it be better to precalculate an array?
 			//I think for now I will implement direct calls.
 			std::vector<double> argument;
 			argument.push_back(energy);
 			argument.push_back(zenith);
+			argument.push_back(anti);
 			double osc_prob = de_solver(argument,user_data);	
-			std::cout << "  ZENITH: " << zenith << "  ENERGY: " << energy << "  PROB: " << osc_prob << std::endl;				
+			std::cout << "  ZENITH: " << zenith << "  ENERGY: " << energy << " ANTI: " << anti  << "  PROB: " << osc_prob << std::endl;				
 			return osc_prob;
    		}
 
@@ -324,42 +200,6 @@ int main(void){
 
 
 
-    
-   
-		/* 
-		std::vector<double> LogNuisancePriors(np)
-		{
-			//
-
-        	return std::vector of nuisance parameter penalization
-        	&return {LogGaussianProbability(np[0],np[0]_prior), ... }
-		}
-		*/	
-
-
-		/*
-		double Flux(double energy, double zenith)
-		{
-			//Return from data set?
-			//How do flux uncertanties enter into this calculation?
-			//For now, restrict to muon flavor only
-		}
-		*/
-
-
-		/*
-		double X_sec(double energy)
-		{
-			//Again, from data-set?
-			//Restrict to muon only
-		} 
-		*/ 
-  
- //	   Set_data()
-    
-//	   Set_simulation()
-
-//void Verosimilitud::testhdf(void)
 
 
 std::vector<unsigned int> Verosimilitud::GetExpDims()
@@ -382,6 +222,88 @@ std::vector<double> Verosimilitud::GetCosZenithEdges()
 	return *coszenith_edges;
 }
 
+
+double Verosimilitud::TestFunction(double e, double z, double a)
+{
+	return log(pow(3*e,4)*pow(z,4));
+}
+
+double Verosimilitud::SimpsAvg(double coszmin,double coszmax, double emin, double emax, double anti, int nintervals_e)
+{
+	double width = (emax-emin)/(double)nintervals_e;
+	double integral=0;
+	double mean=0;
+	double coszval;
+	for(int j=0; j<2; j++)
+	{
+		coszval = coszmin+(double)j*(coszmax-coszmin);
+		integral+=OscillationProbability(emin,acos(coszval),anti);
+		for (int i=1; i<(nintervals_e/2); i++)
+		{
+			integral+=2*OscillationProbability(emin+2*(double)i*width,acos(coszval),anti);
+		}
+		for (int i=1; i<(nintervals_e/2+1); i++)
+		{
+			integral+=4*OscillationProbability(emin+(2*(double)i-1)*width,acos(coszval),anti);
+		}
+		integral+=OscillationProbability(emax,acos(coszval),anti);
+		integral*=width/3.0;
+		mean+=integral/(2*(emax-emin));
+		integral=0;
+	}	
+	return mean;		
+
+}
+/*
+double Verosimilitud::ESimpsAvg(double coszval, double emin, double emax, double anti, int nintervals_e)
+{
+	double width = (emax-emin)/(double)nintervals;
+	double integral=0;
+
+	integral+=OscillationProbability(emin,coszval,anti);
+	for (int i=1; i<(nintervals/2 -1); i++)
+	{
+		integral+=2*OscillationProbability(emin+2*(double)i*width,coszval,anti);
+	}
+	for (int i=1; i<(nintervals/2); i++)
+	{
+		integral+=4*OscillationProbability(emin+(2*(double)i-1)*width,coszval,anti);
+	}
+	integral+=OscillationProbability(emax,coszval,anti);
+	integral*=width/3.0;
+	
+	return integral		
+
+}
+
+double Verosimilitud::CosSimpsAvg(double coszmin, double coszmax, double emin, double emax, double anti, int nintervals_cosz, int nintervals_e)
+{
+	double width = (coszmax-coszmin)/(double)nintervals_cosz;
+	double integral=0;
+	double mean;
+
+	integral+=ESimpsAvg(coszmin,emin,emax,anti,nintervals_e);
+	for (int i=1; i<(nintervals_cosz/2 -1); i++)
+	{
+		integral+=2*ESimpsAvg(coszmin+2*(double)i*width,emin,emax,anti,nintervals_e);
+	}
+	for (int i=1; i<(nintervals_cosz/2); i++)
+	{
+		integral+=4*ESimpsAvg(coszmin+(2*(double)i-1)*width,emin,emax,anti,nintervals_e);
+	}
+	integral+=ESimpsAvg(coszmax,emin,emax,anti,nintervals_e);
+	integral*=width/3.0;
+	mean=integral/(coszmax-coszmin);
+	return mean;
+			
+}
+*/
+
+
+
+
+
+
 void Verosimilitud::CalculateExpectation()
 {
 	unsigned int dyn_indices[3];
@@ -399,47 +321,57 @@ void Verosimilitud::CalculateExpectation()
 
 	std::cout << "AtLoops" << std::endl;
 	
-	//Loop over energy proxies.
-	for(unsigned int ep=0; ep<EnergyProxyBins; ep++)
+	//Loop over true energies.
+	for(unsigned int e=0; e<NeutrinoEnergyBins; e++)
 	{
-		dyn_indices[2]=ep;
+		std::cout << "TRUE ENERGY: " << e << std::endl;
+		dyn_indices[0]=e;
+		unsigned int ep1=e+1;	
+		double eMin=NeutrinoEnergyEdges->Index(&e);
+		double eMax=NeutrinoEnergyEdges->Index(&ep1);
+		double eavg = (eMin+eMax)/2.0;
 	
-		//Loop over years 2010, 2011
-		for(unsigned int year=0; year<2; year++)
+
+		//Loop over matter/antimatter
+		for (unsigned int anti=0; anti<2; anti++)
 		{
-			//Do muon neutrinos only: no loop over flavor.
-			unsigned int flavor=0;
 
-			double livetime= eff_area->GetLivetime(year);			
-
-			//Loop over matter/antimatter
-			for (unsigned int anti=0; anti<2; anti++)
+			//Loop over coszenith bins.
+			for(unsigned int z=0; z<CosZenithBins; z++)
 			{
+				dyn_indices[1]=z;
+				unsigned int zp1=z+1;	
+				double CosZenithMin=CosZenithEdges->Index(&z);
+				double CosZenithMax=CosZenithEdges->Index(&zp1);
+				double zavg = (CosZenithMin+CosZenithMax)/2.0;
 
-				unsigned int area_indices[3] = {year,flavor,anti};
-				area = eff_area->GetArea(area_indices);
-
-				detcorr = conv_flux->GetDetCorr(&year);
-				flux = conv_flux->GetFlux(&anti);
+				//double oscprob = OscillationProbability(eavg,acos(zavg),(double)anti);
+				//double oscprob = SimpsAvg(CosZenithMin,CosZenithMax,eMin,eMax,(double)anti, simps_nintervals);
 
 
-				//Loop over true energy bins.
-				for(unsigned int e=0; e<NeutrinoEnergyBins; e++)
+				//Loop over years 2010, 2011
+				for(unsigned int year=0; year<2; year++)
 				{
-					dyn_indices[0]=e;
-					unsigned int ep1=e+1;	
-					double eMin=NeutrinoEnergyEdges->Index(&e);
-					double eMax=NeutrinoEnergyEdges->Index(&ep1);
+					//Do muon neutrinos only: no loop over flavor.
+					unsigned int flavor=0;
 
-					//Loop over coszenith bins.
-					for(unsigned int z=0; z<CosZenithBins; z++)
+					double livetime= eff_area->GetLivetime(year);			
+
+					unsigned int area_indices[3] = {year,flavor,anti};
+					area = eff_area->GetArea(area_indices);
+
+					detcorr = conv_flux->GetDetCorr(&year);
+					flux = conv_flux->GetFlux(&anti);
+
+
+
+					//Loop over energy proxy bins.
+					for(unsigned int ep=0; ep<EnergyProxyBins; ep++)
 					{
+						dyn_indices[2]=ep;
+
 						counter++;
 						//std::cout << counter << std::endl;
-						dyn_indices[1]=z;
-						unsigned int zp1=z+1;	
-						double CosZenithMin=CosZenithEdges->Index(&z);
-						double CosZenithMax=CosZenithEdges->Index(&zp1);
 
 						double FluxIntegral = flux->Index(dyn_indices);
 						//implement DOM correction?
@@ -447,13 +379,11 @@ void Verosimilitud::CalculateExpectation()
 						double EffAreaVal = area->Index(dyn_indices); 
 						EffAreaVal*=1.0e4; //m^2 to cm^2
 
-						double eavg = (eMin+eMax)/2.0;
-						double zavg = (CosZenithMin+CosZenithMax)/2.0;
-						//double oscprob = OscillationProbability(eavg,zavg);
 	
 						unsigned int exp_indices[2]={ep,z};
 
 						double last=expectation->Index(exp_indices);
+						//double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr*oscprob;
 						double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr;
 
 						expectation->SetIndex(exp_indices,current);
@@ -491,7 +421,7 @@ void Verosimilitud::CalculateExpectation()
 
 }
 
-
+/*
 std::vector<double> Verosimilitud::GetExpectationVec(void)
 {
 	double * exparray = expectation->GetDataPointer();
@@ -503,7 +433,7 @@ std::vector<double> Verosimilitud::GetExpectationVec(void)
 	exp_dimvec.push_back(expdims[1]);
 	return expvec;
 }
-
+*/
 
 std::vector<double> Verosimilitud::GetExpectationVec(std::vector<double> nuisance)
 {
@@ -560,7 +490,7 @@ std::vector<double> Verosimilitud::GetDataVec(void)
 	return datvec;
 }
 
-
+/*
 std::vector<double> Verosimilitud::GetDataVec(double scale)
 {
    unsigned int indices[2];
@@ -599,7 +529,7 @@ std::vector<double> Verosimilitud::GetDataVec(double scale)
 	return datvec;
 
 }
-
+*/
 
 
 
@@ -626,7 +556,7 @@ std::vector<double> Verosimilitud::Chi2MinNuisance(std::vector<double> param)
   dlib::find_min_box_constrained(dlib::bfgs_search_strategy(), dlib::objective_delta_stop_strategy(1e-7),Chi2_caller(this),Chi2grad_caller(this),nuisance,lo_bounds,hi_bounds);
 
 
-	std::vector<double> ret(2,0);
+	std::vector<double> ret(3,0);
 	ret[0]=Chi2(nuisance);
 	ret[1]=nuisance(0);
 	ret[2]=nuisance(1);
@@ -797,7 +727,17 @@ int main(void)
 	}
 */
 	Verosimilitud v(3);
+	double last=0;
+	for (int x=1; x<10; x++)
+	{
+		//std::cout << "N: " << 2*x << " AVG: " <<	v.SimpsAvg(1.57,3.14,100,106,0,2*x) << std::endl;
+		double val=v.SimpsAvg(1,2,1,2,0,2*x);
+		std::cout << "N: " << 2*x << " AVG: " <<	fabs(val-last) << std::endl;
+		std::cout << "N: " << 2*x << " AVG: " <<	val << std::endl;
+		last=val;
+	}
 
+/*
 	std::vector<double> my_eprox_cuts(2,0);
 	std::vector<double> my_cosz_cuts(2,0);
 	
@@ -818,6 +758,6 @@ int main(void)
 	std::cout << "Chi2: " << ret[0] << std::endl;
 	std::cout << "Norm: " << ret[1] << std::endl;
 	std::cout << "Gamma: " << ret[2] << std::endl;
-
+*/
 	return 0;
 }
