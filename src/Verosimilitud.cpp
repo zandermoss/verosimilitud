@@ -382,7 +382,7 @@ std::vector<double> Verosimilitud::GetCosZenithEdges()
 	return *coszenith_edges;
 }
 
-std::vector<double> Verosimilitud::CalculateExpectation()
+void Verosimilitud::CalculateExpectation()
 {
 	unsigned int dyn_indices[3];
 	unsigned int exp_indices[2];
@@ -471,10 +471,10 @@ std::vector<double> Verosimilitud::CalculateExpectation()
 	double* coszenith_edges_array = CosZenithEdges->GetDataPointer();
 	unsigned int coszenith_size= CosZenithEdges->GetDataLength();
 
-	//eprox_edges=new std::vector<double>(eprox_edges_array, eprox_edges_array+eprox_size);
-	//coszenith_edges = new std::vector<double>(coszenith_edges_array, coszenith_edges_array+coszenith_size);
+	eprox_edges=new std::vector<double>(eprox_edges_array, eprox_edges_array+eprox_size);
+	coszenith_edges = new std::vector<double>(coszenith_edges_array, coszenith_edges_array+coszenith_size);
 
-
+/*
 	double * exparray = expectation->GetDataPointer();
 	unsigned int explen = expectation->GetDataLength();
 	std::vector<double> expvec(exparray, exparray + explen);
@@ -487,7 +487,7 @@ std::vector<double> Verosimilitud::CalculateExpectation()
 	std::cout << expdims[1] << std::endl;
 	std::cout << exp_dimvec[0] << std::endl;
 	std::cout << exp_dimvec[1] << std::endl;
-	return expvec;
+*/
 
 }
 
@@ -516,7 +516,7 @@ std::vector<double> Verosimilitud::GetExpectationVec(std::vector<double> nuisanc
 
 
     unsigned int exp_dims[2]={EnergyProxyBins,CosZenithBins};
-    perturbed_expectation = new Tensor(2,exp_dims,0);
+    Tensor* perturbed_expectation = new Tensor(2,exp_dims,0);
 
 
 
@@ -528,7 +528,7 @@ std::vector<double> Verosimilitud::GetExpectationVec(std::vector<double> nuisanc
             indices[1]=z;
             scalar_exp=expectation->Index(indices);
             pert_scalar_exp=norm*scalar_exp*pow((*eprox_centers)[ep]/34592.0,gamma); // fixme what is 34592 number?
-			perturbed_expectation->SetIndex(indices,pert_salar_exp);
+			perturbed_expectation->SetIndex(indices,pert_scalar_exp);
         }
     }
 
@@ -569,7 +569,7 @@ std::vector<double> Verosimilitud::GetDataVec(double scale)
 
 
     unsigned int exp_dims[2]={EnergyProxyBins,CosZenithBins};
-    perturbed_data = new Tensor(2,exp_dims,0);
+    Tensor* perturbed_data = new Tensor(2,exp_dims,0);
 
 
    
@@ -581,7 +581,7 @@ std::vector<double> Verosimilitud::GetDataVec(double scale)
             indices[1]=z;
             scalar_data=data->Index(indices);
             pert_scalar_data=scale*scalar_data; // fixme what is 34592 number?
-            perturbed_data->SetIndex(indices,pert_salar_data);
+            perturbed_data->SetIndex(indices,pert_scalar_data);
         }
     }
 
@@ -606,20 +606,32 @@ std::vector<double> Verosimilitud::GetDataVec(double scale)
 
 
 
-double Verosimilitud::Chi2MinNuisance(std::vector<double>* param)
+std::vector<double> Verosimilitud::Chi2MinNuisance(std::vector<double> param)
 {
 //Minimize over nuisance parameters. 
 
   dlib::matrix<double,0,1> nuisance(2);
-  nuisance(0)=(*param)[0];
-  nuisance(1)=(*param)[1];
+  nuisance(0)=(param)[0];
+  nuisance(1)=(param)[1];
+
+	
+  dlib::matrix<double,0,1> lo_bounds(2);
+  dlib::matrix<double,0,1> hi_bounds(2);
+  lo_bounds(0)=0.01;
+  lo_bounds(1)=-2.0;
+  hi_bounds(0)=2.0;
+  hi_bounds(1)=2.0;
 
 
-  dlib::find_min(dlib::bfgs_search_strategy(), dlib::objective_delta_stop_strategy(1e-7),Chi2_caller(this),Chi2grad_caller(this),nuisance,-1);
+  dlib::find_min_box_constrained(dlib::bfgs_search_strategy(), dlib::objective_delta_stop_strategy(1e-7),Chi2_caller(this),Chi2grad_caller(this),nuisance,lo_bounds,hi_bounds);
 
-  (*param)[0]=nuisance(0);
-  (*param)[1]=nuisance(1);
-	return Chi2(nuisance);
+
+	std::vector<double> ret(2,0);
+	ret[0]=Chi2(nuisance);
+	ret[1]=nuisance(0);
+	ret[2]=nuisance(1);
+
+	return ret;
 }
 
 
@@ -642,7 +654,6 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 	const double norm = nuisance(0);
 	const double gamma = nuisance(1);
 
-
 	//calculate unsaturated log-likelihood with nuisance-perturbed expectation
 
 	for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
@@ -661,13 +672,21 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 			}
 			llh+=prob;
 			count++;
-			//std::cout <<"llh: "<< llh << std::endl;
-			//std::cout << "count: " << count << " / " << ((*eprox_cuts)[1]-(*eprox_cuts)[0])*((*cosz_cuts)[1]-(*cosz_cuts)[0]) << std::endl;
 		}
 	}	
 
-	llh+=LogGaussianProbability(norm,norm_mean,norm_sigma);
-	llh+=LogGaussianProbability(gamma,gamma_mean,gamma_sigma);
+
+	double norm_penalty = LogGaussianProbability(norm,norm_mean,norm_sigma);
+	double gamma_penalty= LogGaussianProbability(gamma,gamma_mean,gamma_sigma);
+	
+	std::cout << "NORM PENALTY  " << norm_penalty << std::endl;
+	std::cout << "GAMMA PENALTY  " << gamma_penalty << std::endl;
+	std::cout << "GAMMA  " << gamma << std::endl;
+	std::cout << "GAMMAmu  " << gamma_mean << std::endl;
+	std::cout << "GAMMAsig  " << gamma_sigma << std::endl;
+
+
+	llh+=norm_penalty + gamma_penalty;
 
 
 	//Calculate saturated log-likelihood
@@ -690,6 +709,9 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 		}
 	}	
 	
+
+	std::cout << "CHI2: " << 2*(sllh-llh) << std::endl;
+	std::cout << std::endl;
 				
 	return 2*(sllh-llh);
 }
@@ -763,7 +785,17 @@ dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0
 
 int main(void)
 {
-
+/*
+	double step=0.1;
+	for (int x=0; x<10; x++)
+	{
+		std::cout << LogGaussianProbability(1-x*step,1,0.4) << std::endl;
+	}
+	for (int x=0; x<10; x++)
+	{
+		std::cout << LogGaussianProbability(1+x*step,1,0.4) << std::endl;
+	}
+*/
 	Verosimilitud v(3);
 
 	std::vector<double> my_eprox_cuts(2,0);
@@ -780,12 +812,12 @@ int main(void)
 	std::vector<double> nuisance_init(2,0);
 	nuisance_init[0]=1; //set norm to one, leave gamma at zero
 	nuisance_init[1]=0;
-	double ret = v.Chi2MinNuisance(&nuisance_init);	
+	std::vector<double> ret = v.Chi2MinNuisance(nuisance_init);	
 
 
-	std::cout << "Chi2: " << ret << std::endl;
-	std::cout << "Norm: " << nuisance_init[0] << std::endl;
-	std::cout << "Gamma: " << nuisance_init[1] << std::endl;
+	std::cout << "Chi2: " << ret[0] << std::endl;
+	std::cout << "Norm: " << ret[1] << std::endl;
+	std::cout << "Gamma: " << ret[2] << std::endl;
 
 	return 0;
 }

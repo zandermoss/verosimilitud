@@ -34,14 +34,35 @@ cdef class Verosim:
 	def GetExpDims(self):
 		return self._c_verosimilitud.GetExpDims()
 
+	def GetDataDims(self):
+		return self._c_verosimilitud.GetExpDims()
+
 	def GetEproxEdges(self):
 		return self._c_verosimilitud.GetEproxEdges()
 
 	def GetCosZenithEdges(self):
 		return self._c_verosimilitud.GetCosZenithEdges()
 
-	def Likelihood(self):
-		return self._c_verosimilitud.Likelihood()
+
+	def CalculateExpectation(self):
+		self._c_verosimilitud.CalculateExpectation()
+
+	def Chi2MinNuisance(self,vector[double] nuisance):
+		return self._c_verosimilitud.Chi2MinNuisance(nuisance)
+
+	def GetDataVec(self,scale):
+		return self._c_verosimilitud.GetDataVec(scale)
+	#def GetDataVec(self):
+	#	return self._c_verosimilitud.GetDataVec()
+
+	def GetExpectationVec(self,vector[double] nuisance):
+		return self._c_verosimilitud.GetExpectationVec(nuisance)
+	#def GetExpectationVec(self):
+	#	return self._c_verosimilitud.GetExpectationVec()
+
+	def SetEproxCuts(self,vector[double] cuts):
+		self._c_verosimilitud.SetEproxCuts(cuts)
+
 
 	"""
 	def SetDeSolver(self,object obj):

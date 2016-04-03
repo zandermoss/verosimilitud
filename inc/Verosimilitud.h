@@ -36,7 +36,7 @@ class Verosimilitud {
 		std::vector<unsigned int> GetDataDims(void);
 		std::vector<double> GetEproxEdges(void);
 		std::vector<double> GetCosZenithEdges(void);
-		std::vector<double> CalculateExpectation(void);
+		void CalculateExpectation(void);
 
 
 		std::vector<double> GetExpectationVec(void);
@@ -46,7 +46,7 @@ class Verosimilitud {
 
 		
 
-		double Chi2MinNuisance(std::vector<double>* param);
+		std::vector<double> Chi2MinNuisance(std::vector<double> nuisance);
 		double Chi2(const dlib::matrix<double,0,1>& nuisance);
 		dlib::matrix<double,0,1> Chi2Gradient(const dlib::matrix<double,0,1>& nuisance);
 
@@ -138,7 +138,45 @@ class Verosimilitud {
 //	   Set_simulation()
 };
 
+class Chi2_caller
+{
+	private:
+		Verosimilitud* my_verosim;
+	public:
+		Chi2_caller(Verosimilitud * verosim)
+		{
+			my_verosim = verosim;
+		}
 
+
+		double operator() (const dlib::matrix<double,0,1>& nuisance) const
+		{
+			return my_verosim->Chi2(nuisance);
+		}
+
+};
+
+
+
+
+class Chi2grad_caller
+{
+	private:
+		Verosimilitud* my_verosim;
+	public:
+
+		Chi2grad_caller(Verosimilitud * verosim)
+		{
+			my_verosim = verosim;
+		}
+
+
+		dlib::matrix<double,0,1> operator() (const dlib::matrix<double,0,1>& nuisance) const
+		{
+			return my_verosim->Chi2Gradient(nuisance);
+		}
+
+};
 
 
 
