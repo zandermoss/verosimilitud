@@ -11,17 +11,22 @@
 #include <cmath>
 #include <cfloat>
 #include <math.h>
+#include <string>
 
 #include <dlib/optimization.h>
 #include <dlib/member_function_pointer.h>
 
 
-Verosimilitud::Verosimilitud(unsigned int my_numneu)
+Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigned int hiyear)
 {
 	numneu=my_numneu;	
 
 
-	simps_nintervals=4;
+	//Which years do we want to include?
+	data_years[0]=loyear;
+	data_years[1]=hiyear;
+
+	simps_nintervals=2;
 
 	eff_area = new EffectiveArea();
 	conv_flux = new ConventionalFlux();
@@ -35,20 +40,26 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu)
 	unsigned int ind1 = 6;
 	unsigned int ind2 = EnergyProxyBins-17;
 
-	icd = new ICData(EnergyProxyEdges, CosZenithEdges);
-	icd->OpenCSV("observed_events.dat");
 
-	//std::vector<unsigned int> data_cosz(CosZenithBins,0);
-	//std::vector<unsigned int> data_eprox(EnergyProxyBins,0);
-	//icd.BinData(&data_cosz,&data_eprox);
+	//Bin data from 2010, 2011, or both!
+	std::string fnames[2] = {"2010.dat","2011.dat"};
 
-	icd->ReadCSV();
 	unsigned int datadims[2];
 	datadims[0]=EnergyProxyBins;
 	datadims[1]=CosZenithBins;
 	data = new Tensor(2,datadims,0);
-    icd->BinData(data);
 
+	for (unsigned int y=data_years[0]; y<data_years[1]; y++)
+	{
+		icd[y] = new ICData(EnergyProxyEdges, CosZenithEdges);
+		icd[y]->OpenCSV(fnames[y]);
+		icd[y]->ReadCSV();
+    	icd[y]->BinData(data);
+	}
+
+
+
+	//Apply the appropriate cuts
 	eprox_cuts = new std::vector<double>(2,0);
 	cosz_cuts = new std::vector<double>(2,0);
 
@@ -84,6 +95,8 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu)
 
 
 	
+
+
 	void Verosimilitud::SetSimpsNIntervals(int nintervals)
 	{
 		simps_nintervals=nintervals;
@@ -91,27 +104,35 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu)
 
 	void Verosimilitud::SetCoszCuts(std::vector<double> cuts)
 	{
+		/*
 		if(cuts.size() != (*cosz_cuts).size()) 
 		{
 			throw std::runtime_error("Cuts Size Incorrect.");
 		}
+		*/
 
 		for (unsigned int i; i<cuts.size(); i++)
 		{
 			(*cosz_cuts)[i]=cuts[i];
+			std::cout <<"COSZ CUTS: " << (*cosz_cuts)[i] << std::endl;
 		}
 	}
 
 	void Verosimilitud::SetEproxCuts(std::vector<double> cuts)
 	{
+		std::cout << "BEGINNING OF EPROXCUT" << std::endl;
+
+		/*
 		if(cuts.size() != (*eprox_cuts).size()) 
 		{
 			throw std::runtime_error("Cuts Size Incorrect.");
 		}
+		*/
 
 		for (unsigned int i; i<cuts.size(); i++)
 		{
 			(*eprox_cuts)[i]=cuts[i];
+			std::cout <<"EPROX CUTS: "  << (*eprox_cuts)[i] << std::endl;
 		}
 	}
 
@@ -121,7 +142,8 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu)
 			delete eff_area;
 			delete conv_flux;
 			delete data;
-			delete icd;
+			delete icd[0];
+			delete icd[1];
 			delete eprox_cuts;
 			delete cosz_cuts;
 			delete eprox_centers;
@@ -210,6 +232,11 @@ std::vector<unsigned int> Verosimilitud::GetExpDims()
 std::vector<unsigned int> Verosimilitud::GetDataDims()
 {
 	return dat_dimvec;
+}
+
+std::vector<double> Verosimilitud::GetEnergyEdges()
+{
+	return *energy_edges;
 }
 
 std::vector<double> Verosimilitud::GetEproxEdges()
@@ -312,6 +339,7 @@ void Verosimilitud::CalculateExpectation()
 	unsigned int edge_indices[4];
 
 
+
 	unsigned int exp_dims[2]={EnergyProxyBins,CosZenithBins};
 	expectation = new Tensor(2,exp_dims,0);
 
@@ -345,12 +373,12 @@ void Verosimilitud::CalculateExpectation()
 				double CosZenithMax=CosZenithEdges->Index(&zp1);
 				double zavg = (CosZenithMin+CosZenithMax)/2.0;
 
-				//double oscprob = OscillationProbability(eavg,acos(zavg),(double)anti);
+				double oscprob = OscillationProbability(eavg,acos(zavg),(double)anti);
 				//double oscprob = SimpsAvg(CosZenithMin,CosZenithMax,eMin,eMax,(double)anti, simps_nintervals);
 
 
 				//Loop over years 2010, 2011
-				for(unsigned int year=0; year<2; year++)
+				for(unsigned int year=data_years[0]; year<data_years[1]; year++)
 				{
 					//Do muon neutrinos only: no loop over flavor.
 					unsigned int flavor=0;
@@ -383,8 +411,8 @@ void Verosimilitud::CalculateExpectation()
 						unsigned int exp_indices[2]={ep,z};
 
 						double last=expectation->Index(exp_indices);
-						//double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr*oscprob;
-						double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr;
+						double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr*oscprob;
+						//double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr;
 
 						expectation->SetIndex(exp_indices,current);
 						countsheep+=FluxIntegral*EffAreaVal*livetime*DomCorr;
@@ -398,10 +426,13 @@ void Verosimilitud::CalculateExpectation()
 
 	double* eprox_edges_array =EnergyProxyEdges->GetDataPointer();
 	unsigned int eprox_size = EnergyProxyEdges->GetDataLength();
+	double* energy_edges_array =NeutrinoEnergyEdges->GetDataPointer();
+	unsigned int energy_size = NeutrinoEnergyEdges->GetDataLength();
 	double* coszenith_edges_array = CosZenithEdges->GetDataPointer();
 	unsigned int coszenith_size= CosZenithEdges->GetDataLength();
 
 	eprox_edges=new std::vector<double>(eprox_edges_array, eprox_edges_array+eprox_size);
+	energy_edges=new std::vector<double>(energy_edges_array, energy_edges_array+energy_size);
 	coszenith_edges = new std::vector<double>(coszenith_edges_array, coszenith_edges_array+coszenith_size);
 
 /*
@@ -421,7 +452,6 @@ void Verosimilitud::CalculateExpectation()
 
 }
 
-/*
 std::vector<double> Verosimilitud::GetExpectationVec(void)
 {
 	double * exparray = expectation->GetDataPointer();
@@ -433,9 +463,43 @@ std::vector<double> Verosimilitud::GetExpectationVec(void)
 	exp_dimvec.push_back(expdims[1]);
 	return expvec;
 }
-*/
 
-std::vector<double> Verosimilitud::GetExpectationVec(std::vector<double> nuisance)
+
+std::vector<double> Verosimilitud::GetFluxVec(void)
+{
+
+	unsigned int anti=0;
+    Tensor* my_flux = conv_flux->GetFlux(&anti);
+
+	double * fluxarray = my_flux->GetDataPointer();
+	unsigned int fluxlen = my_flux->GetDataLength();
+	std::cout << "FLUXLEN: " << fluxlen << std::endl;
+	std::vector<double> fluxvec(fluxlen,0);
+	for (int i=0; i<fluxlen; i++)
+	{
+		fluxvec[i]=fluxarray[i];
+	}
+
+	return fluxvec;
+}
+
+std::vector<double> Verosimilitud::GetAreaVec(void)
+{
+	unsigned int area_indices[3]={0,0,0};
+	Tensor* my_area = eff_area->GetArea(area_indices);
+	double * areaarray = my_area->GetDataPointer();
+	unsigned int arealen = my_area->GetDataLength();
+	std::cout << "AREALEN: " << arealen << std::endl;
+	std::vector<double> areavec(arealen,0);
+	for (int i=0; i<arealen; i++)
+	{
+		areavec[i]=areaarray[i];
+	}
+	return areavec;
+}
+
+
+std::vector<double> Verosimilitud::GetPertExpectationVec(std::vector<double> nuisance)
 {
 	unsigned int indices[2];
 	double scalar_exp;
@@ -586,6 +650,8 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 
 	//calculate unsaturated log-likelihood with nuisance-perturbed expectation
 
+	std::cout << "EPROX CUTS: " <<(*eprox_cuts)[0] << "    "  << (*eprox_cuts)[1] << std::endl;
+
 	for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
    	{
 		for(unsigned int z=(*cosz_cuts)[0]; z<(*cosz_cuts)[1]; z++)
@@ -725,7 +791,6 @@ int main(void)
 	{
 		std::cout << LogGaussianProbability(1+x*step,1,0.4) << std::endl;
 	}
-*/
 	Verosimilitud v(3);
 	double last=0;
 	for (int x=1; x<10; x++)
@@ -736,6 +801,7 @@ int main(void)
 		std::cout << "N: " << 2*x << " AVG: " <<	val << std::endl;
 		last=val;
 	}
+*/
 
 /*
 	std::vector<double> my_eprox_cuts(2,0);

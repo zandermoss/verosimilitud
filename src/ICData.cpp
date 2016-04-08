@@ -6,7 +6,6 @@
 
 ICData::ICData(Tensor* t_eprox_edges, Tensor* t_cosz_edges)
 {
-
     cosz_edges = new std::vector<double>(CosZenithBins+1,0);
     eprox_edges = new std::vector<double>(EnergyProxyBins+1,0);
 

@@ -9,8 +9,20 @@ cdef double callback(vector[double] argument, void *f):
 
 cdef class Verosim:
 	cdef cVerosimilitud.Verosimilitud* _c_verosimilitud
-	def __cinit__(self,unsigned int numneu):
-		self._c_verosimilitud = <cVerosimilitud.Verosimilitud *>new cVerosimilitud.Verosimilitud(numneu)
+	def __cinit__(self,unsigned int numneu, year):
+		if year=="2010":
+			loyear=0
+			hiyear=1
+		elif year=="2011":
+			loyear=1
+			hiyear=2
+		elif year=="both":
+			loyear=0
+			hiyear=2
+		else:
+			raise ValueError("Bad datayears argument: choices are '2010', '2011', or 'both'")
+
+		self._c_verosimilitud = <cVerosimilitud.Verosimilitud *>new cVerosimilitud.Verosimilitud(numneu,loyear,hiyear)
 		#self._c_verosimilitud = new cVerosimilitud.Verosimilitud()
 		if self._c_verosimilitud is NULL:
 			raise MemoryError()
@@ -39,6 +51,8 @@ cdef class Verosim:
 
 	def GetEproxEdges(self):
 		return self._c_verosimilitud.GetEproxEdges()
+	def GetEnergyEdges(self):
+		return self._c_verosimilitud.GetEnergyEdges()
 
 	def GetCosZenithEdges(self):
 		return self._c_verosimilitud.GetCosZenithEdges()
@@ -55,10 +69,14 @@ cdef class Verosim:
 	def GetDataVec(self):
 		return self._c_verosimilitud.GetDataVec()
 
-	def GetExpectationVec(self,vector[double] nuisance):
-		return self._c_verosimilitud.GetExpectationVec(nuisance)
-	#def GetExpectationVec(self):
-	#	return self._c_verosimilitud.GetExpectationVec()
+	def GetPertExpectationVec(self,vector[double] nuisance):
+		return self._c_verosimilitud.GetPertExpectationVec(nuisance)
+	def GetExpectationVec(self):
+		return self._c_verosimilitud.GetExpectationVec()
+	def GetAreaVec(self):
+		return self._c_verosimilitud.GetAreaVec()
+	def GetFluxVec(self):
+		return self._c_verosimilitud.GetFluxVec()
 
 	def SetEproxCuts(self,vector[double] cuts):
 		self._c_verosimilitud.SetEproxCuts(cuts)

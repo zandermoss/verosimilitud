@@ -19,7 +19,7 @@ class Verosimilitud {
 
 	public:
 
-		Verosimilitud(unsigned int my_numneu);
+		Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigned int hiyear);
 		~Verosimilitud();
 	    double LogLikelihood(std::vector<double> pp,std::vector<double> np);
 		typedef double (*pyoscfunc)(std::vector<double> argument, void *userdata);
@@ -35,6 +35,7 @@ class Verosimilitud {
 		std::vector<unsigned int> GetExpDims(void);
 		std::vector<unsigned int> GetDataDims(void);
 		std::vector<double> GetEproxEdges(void);
+		std::vector<double> GetEnergyEdges(void);
 		std::vector<double> GetCosZenithEdges(void);
 		void CalculateExpectation(void);
 
@@ -42,9 +43,11 @@ class Verosimilitud {
 		void SetSimpsNIntervals(int nintervals);
 
 
+		std::vector<double> GetFluxVec(void);
+		std::vector<double> GetAreaVec(void);
 
-		//std::vector<double> GetExpectationVec(void);
-		std::vector<double> GetExpectationVec(std::vector<double> nuisance);
+		std::vector<double> GetExpectationVec(void);
+		std::vector<double> GetPertExpectationVec(std::vector<double> nuisance);
 		std::vector<double> GetDataVec(void);
 		//std::vector<double> GetDataVec(double scale);
 
@@ -63,6 +66,9 @@ class Verosimilitud {
 		void SetEproxCuts(std::vector<double> cuts);
 		void SetCoszCuts(std::vector<double> cuts);
 
+
+
+
 		const unsigned int NeutrinoEnergyBins=280;
     	const unsigned int CosZenithBins=11;
     	const unsigned int EnergyProxyBins=50;
@@ -70,6 +76,9 @@ class Verosimilitud {
 		
 
 	protected:
+
+
+		unsigned int data_years[2];
 
 		int simps_nintervals;
 
@@ -101,6 +110,7 @@ class Verosimilitud {
 		std::vector<unsigned int> exp_dimvec;
 		std::vector<unsigned int> dat_dimvec;
 		std::vector<double>* eprox_edges;
+		std::vector<double>* energy_edges;
 		std::vector<double>* coszenith_edges;
 
 		std::vector<double>* eprox_centers;
@@ -120,7 +130,7 @@ class Verosimilitud {
 
 		Tensor* data;
 		
-		ICData* icd;
+		ICData* icd[2];
 	
 	    ConventionalFlux* conv_flux;
 	    Tensor* flux;
