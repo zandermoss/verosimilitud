@@ -49,10 +49,14 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigne
 	datadims[1]=CosZenithBins;
 	data = new Tensor(2,datadims,0);
 
-	for (unsigned int y=data_years[0]; y<data_years[1]; y++)
+	for (unsigned int y=0; y<2; y++)
 	{
 		icd[y] = new ICData(EnergyProxyEdges, CosZenithEdges);
-		icd[y]->OpenCSV(fnames[y]);
+	}
+
+	for (unsigned int y=data_years[0]; y<data_years[1]; y++)
+	{
+		icd[y]->OpenCSV(fnames[y].c_str());
 		icd[y]->ReadCSV();
     	icd[y]->BinData(data);
 	}
@@ -120,7 +124,6 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigne
 
 	void Verosimilitud::SetEproxCuts(std::vector<double> cuts)
 	{
-		std::cout << "BEGINNING OF EPROXCUT" << std::endl;
 
 		/*
 		if(cuts.size() != (*eprox_cuts).size()) 
@@ -373,13 +376,13 @@ void Verosimilitud::CalculateExpectation()
 				double CosZenithMax=CosZenithEdges->Index(&zp1);
 				double zavg = (CosZenithMin+CosZenithMax)/2.0;
 
-				double oscprob = OscillationProbability(eavg,acos(zavg),(double)anti);
 				//double oscprob = SimpsAvg(CosZenithMin,CosZenithMax,eMin,eMax,(double)anti, simps_nintervals);
 
 
 				//Loop over years 2010, 2011
 				for(unsigned int year=data_years[0]; year<data_years[1]; year++)
 				{
+					std::cout << "YEAR: " << year << std::endl;
 					//Do muon neutrinos only: no loop over flavor.
 					unsigned int flavor=0;
 
@@ -411,8 +414,8 @@ void Verosimilitud::CalculateExpectation()
 						unsigned int exp_indices[2]={ep,z};
 
 						double last=expectation->Index(exp_indices);
-						double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr*oscprob;
-						//double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr;
+						//double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr*oscprob;
+						double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr;
 
 						expectation->SetIndex(exp_indices,current);
 						countsheep+=FluxIntegral*EffAreaVal*livetime*DomCorr;
@@ -642,6 +645,7 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 	int count=0;
 	double prob;
 	double pert_scalar_exp;
+	double raw_scalar_data;
 
 
 
@@ -660,6 +664,8 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 			indices[1]=z;
             scalar_exp=expectation->Index(indices);
 			scalar_data=data->Index(indices);
+			//raw_scalar_data=data->Index(indices);
+			//scalar_data=1.3*raw_scalar_data*pow((*eprox_centers)[ep]/34592.0,0.2); // fixme what is 34592 number?
 			pert_scalar_exp=norm*scalar_exp*pow((*eprox_centers)[ep]/34592.0,gamma); // fixme what is 34592 number?
 			prob = LogPoissonProbability(scalar_data,pert_scalar_exp);
 			if (std::isnan(prob))
@@ -694,6 +700,8 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 			indices[0]=ep;
 			indices[1]=z;
 			scalar_data=data->Index(indices);
+			//raw_scalar_data=data->Index(indices);
+			//scalar_data=1.3*raw_scalar_data*pow((*eprox_centers)[ep]/34592.0,0.2); // fixme what is 34592 number?
 			double satprob;
 			satprob=LogPoissonProbability(scalar_data,scalar_data);
 			if (std::isnan(satprob))
@@ -729,6 +737,7 @@ dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0
 
 	const double norm = nuisance(0);
 	const double gamma = nuisance(1);
+	double raw_scalar_data;
 
 	double center;
 	
@@ -747,6 +756,8 @@ dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0
 			indices[1]=z;
             scalar_exp=expectation->Index(indices);
 			scalar_data=data->Index(indices);
+			//raw_scalar_data=data->Index(indices);
+			//scalar_data=1.3*raw_scalar_data*pow((*eprox_centers)[ep]/34592.0,0.2); // fixme what is 34592 number?
 			pert_scalar_exp=norm*scalar_exp*pow(center/strange_constant,gamma); // fixme what is 34592 number?
 			if(!(std::isnan(LogPoissonProbability(scalar_data,pert_scalar_exp))))
 			{
@@ -781,6 +792,20 @@ dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0
 
 int main(void)
 {
+
+	Verosimilitud v(4,0,2);
+	std::vector<double> my_eprox_cuts(2,0);
+	std::vector<double> my_cosz_cuts(2,0);
+	my_eprox_cuts[0]=6;
+	my_eprox_cuts[1]=v.EnergyProxyBins-16;
+
+	v.SetEproxCuts(my_eprox_cuts);
+	v.CalculateExpectation();
+	std::vector<double> nuisance_init(2,0);
+	nuisance_init[0]=1; //set norm to one, leave gamma at zero
+	nuisance_init[1]=0;
+	std::vector<double> ret = v.Chi2MinNuisance(nuisance_init);	
+
 /*
 	double step=0.1;
 	for (int x=0; x<10; x++)
@@ -804,21 +829,11 @@ int main(void)
 */
 
 /*
-	std::vector<double> my_eprox_cuts(2,0);
-	std::vector<double> my_cosz_cuts(2,0);
 	
-	my_eprox_cuts[0]=6;
-	my_eprox_cuts[1]=v.EnergyProxyBins-16;
-
-	v.SetEproxCuts(my_eprox_cuts);
 
 	v.CalculateExpectation();
 
 
-	std::vector<double> nuisance_init(2,0);
-	nuisance_init[0]=1; //set norm to one, leave gamma at zero
-	nuisance_init[1]=0;
-	std::vector<double> ret = v.Chi2MinNuisance(nuisance_init);	
 
 
 	std::cout << "Chi2: " << ret[0] << std::endl;

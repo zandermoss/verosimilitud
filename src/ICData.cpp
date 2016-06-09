@@ -82,7 +82,8 @@ void ICData::BinData(Tensor* binned_data)
 	{
 		cosbin=0;
 		eproxbin=0;
-		
+	
+	
 		if (cosz[i]<cosz_edges->front())
 		{
 			cosbin=0;
