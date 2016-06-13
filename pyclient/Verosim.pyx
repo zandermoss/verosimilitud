@@ -27,21 +27,6 @@ cdef class Verosim:
 		if self._c_verosimilitud is NULL:
 			raise MemoryError()
 
-	def SetDecayStructure(self, vector[vector[double]] dcy_lambda):
-		self._c_verosimilitud.SetDecayStructure(dcy_lambda)
-		return
-
-	def SetMassStructure(self, vector[vector[double]] pmns_lambda):
-		self._c_verosimilitud.SetMassStructure(pmns_lambda)
-		return
-
-	def SetDecayEigenvalues(self, vector[double] dcy_eig):
-		self._c_verosimilitud.SetDecayEigenvalues(dcy_eig)
-		return
-
-	def PrintThing(self):
-		self._c_verosimilitud.PrintThing()
-		return
 
 	def GetExpDims(self):
 		return self._c_verosimilitud.GetExpDims()

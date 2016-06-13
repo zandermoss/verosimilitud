@@ -97,49 +97,6 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigne
 
 }
 
-
-	
-
-
-	void Verosimilitud::SetSimpsNIntervals(int nintervals)
-	{
-		simps_nintervals=nintervals;
-	}
-
-	void Verosimilitud::SetCoszCuts(std::vector<double> cuts)
-	{
-		/*
-		if(cuts.size() != (*cosz_cuts).size()) 
-		{
-			throw std::runtime_error("Cuts Size Incorrect.");
-		}
-		*/
-
-		for (unsigned int i; i<cuts.size(); i++)
-		{
-			(*cosz_cuts)[i]=cuts[i];
-			std::cout <<"COSZ CUTS: " << (*cosz_cuts)[i] << std::endl;
-		}
-	}
-
-	void Verosimilitud::SetEproxCuts(std::vector<double> cuts)
-	{
-
-		/*
-		if(cuts.size() != (*eprox_cuts).size()) 
-		{
-			throw std::runtime_error("Cuts Size Incorrect.");
-		}
-		*/
-
-		for (unsigned int i; i<cuts.size(); i++)
-		{
-			(*eprox_cuts)[i]=cuts[i];
-			std::cout <<"EPROX CUTS: "  << (*eprox_cuts)[i] << std::endl;
-		}
-	}
-
-
 		Verosimilitud::~Verosimilitud()
 		{
 			delete eff_area;
@@ -152,57 +109,36 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigne
 			delete eprox_centers;
 			delete coszenith_centers;
 		}
+
 	
-        void Verosimilitud::SetDecayStructure(std::vector<std::vector<double> > my_dcy_lambda)
-		{
-	        if((my_dcy_lambda.size() != my_dcy_lambda[0].size()) 
-				|| (my_dcy_lambda.size() != numneu))
-			{
-	        	throw std::runtime_error("Decay lambda matrix has the wrong dimensions.");
-			}
 
-			for (unsigned int i=0; i<my_dcy_lambda.size(); i++)
-			{
-				decay_lambda.push_back(my_dcy_lambda[i]);
-			}	
-		}
 
-        void Verosimilitud::SetMassStructure(std::vector<std::vector<double> > my_pmns_lambda)
-		{
-	        if((my_pmns_lambda.size() != my_pmns_lambda[0].size()) 
-				|| (my_pmns_lambda.size() != numneu))
-			{
-	        	throw std::runtime_error("Decay lambda matrix has the wrong dimensions.");
-			}
+	void Verosimilitud::SetSimpsNIntervals(int nintervals)
+	{
+		simps_nintervals=nintervals;
+	}
 
-			for (unsigned int i=0; i<my_pmns_lambda.size(); i++)
-			{
-				pmns_lambda.push_back(my_pmns_lambda[i]);
-			}	
+	void Verosimilitud::SetCoszCuts(std::vector<double> cuts)
+	{
+		for (unsigned int i; i<cuts.size(); i++)
+		{
+			(*cosz_cuts)[i]=cuts[i];
+			std::cout <<"COSZ CUTS: " << (*cosz_cuts)[i] << std::endl;
 		}
+	}
 
-        void Verosimilitud::SetDecayEigenvalues(std::vector<double> my_dcy_eig)
-		{
-	        if(my_dcy_eig.size() != numneu)
-			{
-	        	throw std::runtime_error("Decay eigenvalue vector has the wrong dimension.");
-			}
+	void Verosimilitud::SetEproxCuts(std::vector<double> cuts)
+	{
 
-			decay_eig=std::vector<double>(my_dcy_eig);
+		for (unsigned int i; i<cuts.size(); i++)
+		{
+			(*eprox_cuts)[i]=cuts[i];
+			std::cout <<"EPROX CUTS: "  << (*eprox_cuts)[i] << std::endl;
 		}
+	}
 
-		void Verosimilitud::Print1D(std::vector<double> array)
-		{
-			PrintArray(array);
-		}
-		void Verosimilitud::Print2D(std::vector<std::vector<double> > matrix)
-		{
-			PrintMatrix(matrix);
-		}
-		void Verosimilitud::PrintThing(void)
-		{
-			PrintMatrix(decay_lambda);
-		}
+
+	
 
 	    double Verosimilitud::OscillationProbability(double energy,double zenith, double anti)
 		{
@@ -438,21 +374,6 @@ void Verosimilitud::CalculateExpectation()
 	energy_edges=new std::vector<double>(energy_edges_array, energy_edges_array+energy_size);
 	coszenith_edges = new std::vector<double>(coszenith_edges_array, coszenith_edges_array+coszenith_size);
 
-/*
-	double * exparray = expectation->GetDataPointer();
-	unsigned int explen = expectation->GetDataLength();
-	std::vector<double> expvec(exparray, exparray + explen);
-	unsigned int expdims[]={0,0};
-	expectation->GetDims(expdims);
-	exp_dimvec.push_back(expdims[0]);
-	exp_dimvec.push_back(expdims[1]);
-	//std::cout << exp_dims[0] << std::endl;
-	std::cout << expdims[0] << std::endl;
-	std::cout << expdims[1] << std::endl;
-	std::cout << exp_dimvec[0] << std::endl;
-	std::cout << exp_dimvec[1] << std::endl;
-*/
-
 }
 
 std::vector<double> Verosimilitud::GetExpectationVec(void)
@@ -557,46 +478,6 @@ std::vector<double> Verosimilitud::GetDataVec(void)
 	return datvec;
 }
 
-/*
-std::vector<double> Verosimilitud::GetDataVec(double scale)
-{
-   unsigned int indices[2];
-    double pert_scalar_data;
-    double scalar_data;
-
-
-    unsigned int exp_dims[2]={EnergyProxyBins,CosZenithBins};
-    Tensor* perturbed_data = new Tensor(2,exp_dims,0);
-
-
-   
-   for(unsigned int ep=0; ep<EnergyProxyBins; ep++)
-    {
-        for(unsigned int z=0; z<CosZenithBins; z++)
-        {
-            indices[0]=ep;
-            indices[1]=z;
-            scalar_data=data->Index(indices);
-            pert_scalar_data=scale*scalar_data; // fixme what is 34592 number?
-            perturbed_data->SetIndex(indices,pert_scalar_data);
-        }
-    }
-
-
-
-	double * datarray = perturbed_data->GetDataPointer();
-	unsigned int datlen = perturbed_data->GetDataLength();
-	std::vector<double> datvec(datarray, datarray + datlen);
-	unsigned int datdims[]={0,0};
-	perturbed_data->GetDims(datdims);
-	dat_dimvec.push_back(datdims[0]);
-	dat_dimvec.push_back(datdims[1]);
-	delete perturbed_data;
-
-	return datvec;
-
-}
-*/
 
 
 
