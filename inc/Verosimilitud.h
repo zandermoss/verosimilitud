@@ -102,7 +102,7 @@ class Verosimilitud {
 			This tensor, of Tensor type, should be considered as a two dimensional histogram in energy proxy and zenith angle. The vector returned then provides the number of bins in each dimension.
 
 			FIXME reference Tensor class!
-		*/!
+		*/
 
 		std::vector<unsigned int> GetDataDims(void);
 
@@ -224,7 +224,7 @@ class Verosimilitud {
 			Chi2 is then approximated from calculated log-likelihood and saturated log-likelihood values.
 			\param a vector of nuisance parameters. Currently: [normalization, spectral index]
 			\return approximate Chi2
-		*/!
+		*/
 
 		double Chi2(const dlib::matrix<double,0,1>& nuisance);
 
@@ -252,7 +252,7 @@ class Verosimilitud {
 
 		\return the approximate average of oscillation probability over the bin.
 
-		*/!
+		*/
 
 		double SimpsAvg(double coszmin, double coszmax, double emin, double emax, double anti, int nintervals);
 
@@ -275,7 +275,7 @@ class Verosimilitud {
 			\param e a dummy representing the energy proxy.
 			\param z a dummy representing the cos(zenith). 
 			\return a dummy representing the oscillation probability.
-		*/!
+		*/
 
 		double TestFunction(double e, double z);
 
@@ -288,7 +288,7 @@ class Verosimilitud {
 		/*!
 			Due to poor energy reconstruction at low energies, and astrophysical contamination at high energies, the top and tail of the energy distribution should be cut.
 			\param cuts a two-element vector with the lower bound first, and the upper bound second.
-		*/!
+		*/
 
 		void SetEproxCuts(std::vector<double> cuts);
 
@@ -297,7 +297,7 @@ class Verosimilitud {
 		//! Sets cuts on the cos(zenith) range to use in the calculation of Chi2.
 		/*!
 			\param cuts a two-element vector with the lower bound first, and the upper bound second.
-		*/!
+		*/
 
 		void SetCoszCuts(std::vector<double> cuts);
 
