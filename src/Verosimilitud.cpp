@@ -189,7 +189,7 @@ std::vector<double> Verosimilitud::GetCosZenithEdges()
 }
 
 
-double Verosimilitud::TestFunction(double e, double z, double a)
+double Verosimilitud::TestFunction(double e, double z)
 {
 	return log(pow(3*e,4)*pow(z,4));
 }
