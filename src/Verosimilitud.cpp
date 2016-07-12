@@ -313,6 +313,7 @@ void Verosimilitud::CalculateExpectation()
 				double zavg = (CosZenithMin+CosZenithMax)/2.0;
 
 				//double oscprob = SimpsAvg(CosZenithMin,CosZenithMax,eMin,eMax,(double)anti, simps_nintervals);
+				//uncomment above to let neutrinos oscillate
 
 
 				//Loop over years 2010, 2011

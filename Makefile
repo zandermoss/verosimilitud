@@ -15,12 +15,12 @@ CFLAGS = -Wall -g -fPIC -std=c++11
 
 # define any directories containing header files other than /usr/include
 #
-INCLUDES = -I ./inc -I/usr/include/python2.7 -I/usr/local/hdf5/include -I/home/pinkpig/src/dlib-18.18
+INCLUDES = -I /Users/marjon/work/IceCube/neutrino_decay/verosimilitud/inc -I/usr/include/python2.7 -I/usr/local/Cellar/hdf5/1.8.16_1/include -I/Users/marjon/local/dlib-18.18
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
-LFLAGS = -L/usr/local/hdf5/lib
+LFLAGS = -L/usr/local/Cellar/hdf5/1.8.16_1/lib
 
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname 
