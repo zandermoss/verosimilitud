@@ -19,7 +19,7 @@ class ConventionalFlux
 
 	private:
 		Tensor* detcorr[2];
-		Tensor* flux[2];
+		Tensor* flux[4];
 
 };
 
