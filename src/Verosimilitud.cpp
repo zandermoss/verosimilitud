@@ -276,15 +276,13 @@ void Verosimilitud::CalculateExpectation()
 	unsigned int exp_indices[2];
 	unsigned int area_indices[3];
 	unsigned int edge_indices[4];
-
-
+	
+	unsigned int which_flux;
 
 	unsigned int exp_dims[2]={EnergyProxyBins,CosZenithBins};
 	expectation = new Tensor(2,exp_dims,0);
 
 	unsigned int counter=0;
-
-	double countsheep=0;
 
 	std::cout << "AtLoops" << std::endl;
 	
@@ -298,71 +296,74 @@ void Verosimilitud::CalculateExpectation()
 		double eMax=NeutrinoEnergyEdges->Index(&ep1);
 		double eavg = (eMin+eMax)/2.0;
 	
-
-		//Loop over matter/antimatter
-		for (unsigned int anti=0; anti<2; anti++)
+		//Loop over mesons
+		for (unsigned int meson=0; meson<2; meson++)
 		{
-
-			//Loop over coszenith bins.
-			for(unsigned int z=0; z<CosZenithBins; z++)
+			//Loop over matter/antimatter
+			for (unsigned int anti=0; anti<2; anti++)
 			{
-				dyn_indices[1]=z;
-				unsigned int zp1=z+1;	
-				double CosZenithMin=CosZenithEdges->Index(&z);
-				double CosZenithMax=CosZenithEdges->Index(&zp1);
-				double zavg = (CosZenithMin+CosZenithMax)/2.0;
-
-				//double oscprob = SimpsAvg(CosZenithMin,CosZenithMax,eMin,eMax,(double)anti, simps_nintervals);
-				//uncomment above to let neutrinos oscillate
-
-
-				//Loop over years 2010, 2011
-				for(unsigned int year=data_years[0]; year<data_years[1]; year++)
+				//Loop over coszenith bins.
+				for(unsigned int z=0; z<CosZenithBins; z++)
 				{
-					std::cout << "YEAR: " << year << std::endl;
-					//Do muon neutrinos only: no loop over flavor.
-					unsigned int flavor=0;
+					dyn_indices[1]=z;
+					unsigned int zp1=z+1;	
+					double CosZenithMin=CosZenithEdges->Index(&z);
+					double CosZenithMax=CosZenithEdges->Index(&zp1);
+					double zavg = (CosZenithMin+CosZenithMax)/2.0;
 
-					double livetime= eff_area->GetLivetime(year);			
+					//double oscprob = SimpsAvg(CosZenithMin,CosZenithMax,eMin,eMax,(double)anti, simps_nintervals);
+					//uncomment above to let neutrinos oscillate
 
-					unsigned int area_indices[3] = {year,flavor,anti};
-					area = eff_area->GetArea(area_indices);
-
-					detcorr = conv_flux->GetDetCorr(&year);
-					flux = conv_flux->GetFlux(&anti);
-
-
-
-					//Loop over energy proxy bins.
-					for(unsigned int ep=0; ep<EnergyProxyBins; ep++)
+					//Loop over years 2010, 2011
+					for(unsigned int year=data_years[0]; year<data_years[1]; year++)
 					{
-						dyn_indices[2]=ep;
+						std::cout << "YEAR: " << year << std::endl;
+						//Do muon neutrinos only: no loop over flavor.
+						unsigned int flavor=0;
 
-						counter++;
-						//std::cout << counter << std::endl;
+						double livetime= eff_area->GetLivetime(year);			
 
-						double FluxIntegral = flux->Index(dyn_indices);
-						//implement DOM correction?
-						double DomCorr = detcorr->Index(dyn_indices);
-						double EffAreaVal = area->Index(dyn_indices); 
-						EffAreaVal*=1.0e4; //m^2 to cm^2
+						unsigned int area_indices[3] = {year,flavor,anti};
+						area = eff_area->GetArea(area_indices);
+
+						detcorr = conv_flux->GetDetCorr(&year);
+						
+						if 		(meson == 0 && anti == 0){ which_flux = 0; }
+						else if (meson == 0 && anti == 1){ which_flux = 1; }
+						else if (meson == 1 && anti == 0){ which_flux = 2; }
+						else if (meson == 1 && anti == 1){ which_flux = 3; }
+						
+						flux = conv_flux->GetFlux(&which_flux);
+
+						//Loop over energy proxy bins.
+						for(unsigned int ep=0; ep<EnergyProxyBins; ep++)
+						{
+							dyn_indices[2]=ep;
+
+							counter++;
+							//std::cout << counter << std::endl;
+
+							double FluxIntegral = flux->Index(dyn_indices);
+							//implement DOM correction?
+							double DomCorr = detcorr->Index(dyn_indices);
+							double EffAreaVal = area->Index(dyn_indices); 
+							EffAreaVal*=1.0e4; //m^2 to cm^2
 
 	
-						unsigned int exp_indices[2]={ep,z};
+							unsigned int exp_indices[2]={ep,z};
 
-						double last=expectation->Index(exp_indices);
-						//double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr*oscprob;
-						double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr;
+							double last=expectation->Index(exp_indices);
+							//double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr*oscprob;
+							double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr;
 
-						expectation->SetIndex(exp_indices,current);
-						countsheep+=FluxIntegral*EffAreaVal*livetime*DomCorr;
+							expectation->SetIndex(exp_indices,current); //make two separate expectations ->make expectation an array
 	
+						}
 					}
 				}
 			}
 		}
 	}
-	std::cout<<"COUNTSHEEP: " << countsheep << std::endl;
 
 	double* eprox_edges_array =EnergyProxyEdges->GetDataPointer();
 	unsigned int eprox_size = EnergyProxyEdges->GetDataLength();
@@ -391,6 +392,8 @@ std::vector<double> Verosimilitud::GetExpectationVec(void)
 
 
 std::vector<double> Verosimilitud::GetFluxVec(void)
+// Why is this hard-coded for anti=0?
+// This is not going to work with the separate Pi, K fluxes
 {
 
 	unsigned int anti=0;
@@ -488,7 +491,6 @@ std::vector<double> Verosimilitud::GetDataVec(void)
 std::vector<double> Verosimilitud::Chi2MinNuisance(std::vector<double> param)
 {
 //Minimize over nuisance parameters. 
-
   dlib::matrix<double,0,1> nuisance(2);
   nuisance(0)=(param)[0];
   nuisance(1)=(param)[1];
@@ -501,9 +503,8 @@ std::vector<double> Verosimilitud::Chi2MinNuisance(std::vector<double> param)
   hi_bounds(0)=2.0;
   hi_bounds(1)=2.0;
 
-
+	// Marjon: error is in the line below
   dlib::find_min_box_constrained(dlib::bfgs_search_strategy(), dlib::objective_delta_stop_strategy(1e-7),Chi2_caller(this),Chi2grad_caller(this),nuisance,lo_bounds,hi_bounds);
-
 
 	std::vector<double> ret(3,0);
 	ret[0]=Chi2(nuisance);
