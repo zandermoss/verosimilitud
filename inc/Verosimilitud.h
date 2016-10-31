@@ -395,7 +395,10 @@ class Verosimilitud {
 	double norm_sigma=0.4;
 	double gamma_mean=0;
 	double gamma_sigma=0.03;
-
+	double r_kpi_mean=1;
+	double r_kpi_sigma=0.0;
+	double r_nubarnu_mean=1;
+	double r_nubarnu_sigma=0.0;
 
 
    

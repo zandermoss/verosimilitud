@@ -280,7 +280,13 @@ void Verosimilitud::CalculateExpectation()
 	unsigned int which_flux;
 
 	unsigned int exp_dims[2]={EnergyProxyBins,CosZenithBins};
-	expectation = new Tensor(2,exp_dims,0);
+
+//	expectation = new Tensor(2,exp_dims,0);
+
+	Tensor* expectation[4];	
+	for (int i = 0; i<4; i++){
+		expectation[i]= new Tensor(2,exp_dims,0);
+		}
 
 	unsigned int counter=0;
 
@@ -289,7 +295,7 @@ void Verosimilitud::CalculateExpectation()
 	//Loop over true energies.
 	for(unsigned int e=0; e<NeutrinoEnergyBins; e++)
 	{
-		std::cout << "TRUE ENERGY: " << e << std::endl;
+//		std::cout << "TRUE ENERGY: " << e << std::endl;
 		dyn_indices[0]=e;
 		unsigned int ep1=e+1;	
 		double eMin=NeutrinoEnergyEdges->Index(&e);
@@ -317,7 +323,7 @@ void Verosimilitud::CalculateExpectation()
 					//Loop over years 2010, 2011
 					for(unsigned int year=data_years[0]; year<data_years[1]; year++)
 					{
-						std::cout << "YEAR: " << year << std::endl;
+//						std::cout << "YEAR: " << year << std::endl;
 						//Do muon neutrinos only: no loop over flavor.
 						unsigned int flavor=0;
 
@@ -352,11 +358,11 @@ void Verosimilitud::CalculateExpectation()
 	
 							unsigned int exp_indices[2]={ep,z};
 
-							double last=expectation->Index(exp_indices);
+							double last=expectation[which_flux]->Index(exp_indices);
 							//double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr*oscprob;
 							double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr;
 
-							expectation->SetIndex(exp_indices,current); //make two separate expectations ->make expectation an array
+							expectation[which_flux]->SetIndex(exp_indices,current); //make two separate expectations ->make expectation an array
 	
 						}
 					}
@@ -378,6 +384,7 @@ void Verosimilitud::CalculateExpectation()
 
 }
 
+/*
 std::vector<double> Verosimilitud::GetExpectationVec(void)
 {
 	double * exparray = expectation->GetDataPointer();
@@ -389,7 +396,7 @@ std::vector<double> Verosimilitud::GetExpectationVec(void)
 	exp_dimvec.push_back(expdims[1]);
 	return expvec;
 }
-
+*/
 
 std::vector<double> Verosimilitud::GetFluxVec(void)
 // Why is this hard-coded for anti=0?
@@ -430,12 +437,16 @@ std::vector<double> Verosimilitud::GetAreaVec(void)
 std::vector<double> Verosimilitud::GetPertExpectationVec(std::vector<double> nuisance)
 {
 	unsigned int indices[2];
-	double scalar_exp;
+	double scalar_exp[4];
 	double pert_scalar_exp;
 
 	double norm=nuisance[0];
 	double gamma=nuisance[1];
+	double r_kpi=nuisance[2];
+	double r_nubarnu=nuisance[3];
 
+	double E0 = 34592.0;
+	double center;
 
     unsigned int exp_dims[2]={EnergyProxyBins,CosZenithBins};
     Tensor* perturbed_expectation = new Tensor(2,exp_dims,0);
@@ -444,12 +455,18 @@ std::vector<double> Verosimilitud::GetPertExpectationVec(std::vector<double> nui
 
    for(unsigned int ep=0; ep<EnergyProxyBins; ep++)
     {
+    	center = (*eprox_centers)[ep];
+    	
         for(unsigned int z=0; z<CosZenithBins; z++)
         {
             indices[0]=ep;
             indices[1]=z;
-            scalar_exp=expectation->Index(indices);
-            pert_scalar_exp=norm*scalar_exp*pow((*eprox_centers)[ep]/34592.0,gamma); // fixme what is 34592 number?
+            
+            for (unsigned int i=0; i<4; i++){
+            	scalar_exp[i]=expectation[i].Index(indices);
+            }
+            
+            pert_scalar_exp = norm*pow(center/E0,-gamma)*(scalar_exp[0]+r_kpi*scalar_exp[2]+r_nubarnu*(scalar_exp[1]+r_kpi*scalar_exp[3]));
 			perturbed_expectation->SetIndex(indices,pert_scalar_exp);
         }
     }
@@ -491,25 +508,34 @@ std::vector<double> Verosimilitud::GetDataVec(void)
 std::vector<double> Verosimilitud::Chi2MinNuisance(std::vector<double> param)
 {
 //Minimize over nuisance parameters. 
-  dlib::matrix<double,0,1> nuisance(2);
+  dlib::matrix<double,0,1> nuisance(4);
   nuisance(0)=(param)[0];
   nuisance(1)=(param)[1];
+  nuisance(2)=(param)[2];
+  nuisance(3)=(param)[3];
 
 	
-  dlib::matrix<double,0,1> lo_bounds(2);
-  dlib::matrix<double,0,1> hi_bounds(2);
+  dlib::matrix<double,0,1> lo_bounds(4);
+  dlib::matrix<double,0,1> hi_bounds(4);
   lo_bounds(0)=0.01;
   lo_bounds(1)=-2.0;
+  lo_bounds(2)=0.01;
+  lo_bounds(3)=0.01;
   hi_bounds(0)=2.0;
   hi_bounds(1)=2.0;
+  hi_bounds(2)=2.0;
+  hi_bounds(3)=2.0;
+
 
 	// Marjon: error is in the line below
   dlib::find_min_box_constrained(dlib::bfgs_search_strategy(), dlib::objective_delta_stop_strategy(1e-7),Chi2_caller(this),Chi2grad_caller(this),nuisance,lo_bounds,hi_bounds);
 
-	std::vector<double> ret(3,0);
+	std::vector<double> ret(5,0);
 	ret[0]=Chi2(nuisance);
 	ret[1]=nuisance(0);
 	ret[2]=nuisance(1);
+	ret[3]=nuisance(2);
+	ret[4]=nuisance(3);
 
 	return ret;
 }
@@ -521,36 +547,50 @@ std::vector<double> Verosimilitud::Chi2MinNuisance(std::vector<double> param)
 double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 {
 	unsigned int indices[2];
-	double scalar_exp;
+	double scalar_exp[4];
 	double scalar_data;
 	double llh=0;
 	double sllh=0;
 	int count=0;
 	double prob;
-	double pert_scalar_exp;
+	double tot_scalar_exp;
 	double raw_scalar_data;
-
-
 
 	const double norm = nuisance(0);
 	const double gamma = nuisance(1);
+	const double r_kpi = nuisance(2);		//ratio of kaons to pions
+	const double r_nubarnu = nuisance(3);	//ratio of nubars to nus
+	
+	double center;
+	double E0 = 34592.0;
 
 	//calculate unsaturated log-likelihood with nuisance-perturbed expectation
 
-	std::cout << "EPROX CUTS: " <<(*eprox_cuts)[0] << "    "  << (*eprox_cuts)[1] << std::endl;
+//	std::cout << "EPROX CUTS: " <<(*eprox_cuts)[0] << "    "  << (*eprox_cuts)[1] << std::endl;
 
 	for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
    	{
+   	
+   	center=(*eprox_centers)[ep];
+   	
 		for(unsigned int z=(*cosz_cuts)[0]; z<(*cosz_cuts)[1]; z++)
 		{
 			indices[0]=ep;
 			indices[1]=z;
-            scalar_exp=expectation->Index(indices);
+  
+			for (unsigned int i=0; i<4; i++){   
+            	scalar_exp[i]=expectation[i].Index(indices);
+			}
+
 			scalar_data=data->Index(indices);
+
 			//raw_scalar_data=data->Index(indices);
 			//scalar_data=1.3*raw_scalar_data*pow((*eprox_centers)[ep]/34592.0,0.2); // fixme what is 34592 number?
-			pert_scalar_exp=norm*scalar_exp*pow((*eprox_centers)[ep]/34592.0,gamma); // fixme what is 34592 number?
-			prob = LogPoissonProbability(scalar_data,pert_scalar_exp);
+			//tot_scalar_exp=norm*scalar_exp*pow((*eprox_centers)[ep]/34592.0,gamma); // fixme what is 34592 number?
+
+			tot_scalar_exp = norm*pow(center/E0,-gamma)*(scalar_exp[0]+r_kpi*scalar_exp[2]+r_nubarnu*(scalar_exp[1]+r_kpi*scalar_exp[3]));
+	
+			prob = LogPoissonProbability(scalar_data,tot_scalar_exp);
 			if (std::isnan(prob))
 			{
 				prob=0;
@@ -562,16 +602,18 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 
 
 	double norm_penalty = LogGaussianProbability(norm,norm_mean,norm_sigma);
-	double gamma_penalty= LogGaussianProbability(gamma,gamma_mean,gamma_sigma);
+	double gamma_penalty = LogGaussianProbability(gamma,gamma_mean,gamma_sigma);
+	double r_kpi_penalty = LogGaussianProbability(r_kpi,r_kpi_mean,r_kpi_sigma);
+	double r_nubarnu_penalty = LogGaussianProbability(r_nubarnu,r_nubarnu_mean,r_nubarnu_sigma);
 	
-	std::cout << "NORM PENALTY  " << norm_penalty << std::endl;
-	std::cout << "GAMMA PENALTY  " << gamma_penalty << std::endl;
-	std::cout << "GAMMA  " << gamma << std::endl;
-	std::cout << "GAMMAmu  " << gamma_mean << std::endl;
-	std::cout << "GAMMAsig  " << gamma_sigma << std::endl;
+//	std::cout << "NORM PENALTY  " << norm_penalty << std::endl;
+//	std::cout << "GAMMA PENALTY  " << gamma_penalty << std::endl;
+//	std::cout << "GAMMA  " << gamma << std::endl;
+//	std::cout << "GAMMAmu  " << gamma_mean << std::endl;
+//	std::cout << "GAMMAsig  " << gamma_sigma << std::endl;
 
 
-	llh+=norm_penalty + gamma_penalty;
+	llh+=norm_penalty + gamma_penalty + r_kpi_penalty + r_nubarnu_penalty;
 
 
 	//Calculate saturated log-likelihood
@@ -597,8 +639,8 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 	}	
 	
 
-	std::cout << "CHI2: " << 2*(sllh-llh) << std::endl;
-	std::cout << std::endl;
+//	std::cout << "CHI2: " << 2*(sllh-llh) << std::endl;
+//	std::cout << std::endl;
 				
 	return 2*(sllh-llh);
 }
@@ -614,18 +656,25 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0,1>& nuisance)
 {
 	unsigned int indices[2];
-	double scalar_exp;
+	double scalar_exp[4];
 	double scalar_data;
-	double pert_scalar_exp;
+	double tot_scalar_exp;
 
 	const double norm = nuisance(0);
 	const double gamma = nuisance(1);
+	const double r_kpi = nuisance(2);		//ratio of kaons to pions
+	const double r_nubarnu = nuisance(3);	//ratio of nubars to nus	
+	
+	const double E0 = 34592.0;
+	
 	double raw_scalar_data;
 
 	double center;
 	
 	double grad0=0;
 	double grad1=0;
+	double grad2=0;
+	double grad3=0;
 
 
 	double strange_constant=34592.0;
@@ -637,15 +686,24 @@ dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0
 		{
 			indices[0]=ep;
 			indices[1]=z;
-            scalar_exp=expectation->Index(indices);
+			
+			for (unsigned int i = 0; i<4; i++){
+            	scalar_exp[i]=expectation[i].Index(indices);
+			}
+			
 			scalar_data=data->Index(indices);
+
 			//raw_scalar_data=data->Index(indices);
 			//scalar_data=1.3*raw_scalar_data*pow((*eprox_centers)[ep]/34592.0,0.2); // fixme what is 34592 number?
-			pert_scalar_exp=norm*scalar_exp*pow(center/strange_constant,gamma); // fixme what is 34592 number?
-			if(!(std::isnan(LogPoissonProbability(scalar_data,pert_scalar_exp))))
+
+			tot_scalar_exp=norm*pow(center/E0,-gamma) * ((scalar_exp[0]+r_kpi*scalar_exp[2])+r_nubarnu*(scalar_exp[1]+r_kpi*scalar_exp[3]));
+			
+			if(!(std::isnan(LogPoissonProbability(scalar_data,tot_scalar_exp))))
 			{
-				grad0+=(1- scalar_data/pert_scalar_exp)*scalar_exp*pow(center/strange_constant,gamma);
-				grad1+=(1- scalar_data/pert_scalar_exp)*norm*scalar_exp*log(center/strange_constant)*pow(center/strange_constant,gamma);
+				grad0 -= tot_scalar_exp/norm * (scalar_data/tot_scalar_exp - 1);
+				grad1 -= -tot_scalar_exp*log(center/E0) * (scalar_data/tot_scalar_exp - 1);
+				grad2 -= norm*pow(center/E0,-gamma)*(scalar_exp[2] + r_nubarnu*scalar_exp[3]) * (scalar_data/tot_scalar_exp - 1);
+				grad3 -= norm*pow(center/E0,-gamma)*(scalar_exp[1] + r_kpi*scalar_exp[3]) * (scalar_data/tot_scalar_exp - 1);
 			}
 
 		}
@@ -653,75 +711,22 @@ dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0
 
 	grad0+=(norm-norm_mean)/pow(norm_sigma,2);
 	grad1+=(gamma-gamma_mean)/pow(gamma_sigma,2);
-
+	grad2+=(r_kpi-r_kpi_mean)/pow(r_kpi_sigma,2);
+	grad3+=(r_nubarnu-r_nubarnu_mean)/pow(r_nubarnu_sigma,2);
+	
 	grad0*=2;
 	grad1*=2;
+	grad2*=2;
+	grad3*=2;
 
 
-	dlib::matrix<double,0,1> gradient(2);
+	dlib::matrix<double,0,1> gradient(4);
 
 	gradient(0) = grad0;
 	gradient(1) = grad1;
+	gradient(2) = grad2;
+	gradient(3) = grad3;
 
 	return gradient;
 }
 
-
-
-
-
-
-
-
-int main(void)
-{
-
-	Verosimilitud v(4,0,2);
-	std::vector<double> my_eprox_cuts(2,0);
-	std::vector<double> my_cosz_cuts(2,0);
-	my_eprox_cuts[0]=6;
-	my_eprox_cuts[1]=v.EnergyProxyBins-16;
-
-	v.SetEproxCuts(my_eprox_cuts);
-	v.CalculateExpectation();
-	std::vector<double> nuisance_init(2,0);
-	nuisance_init[0]=1; //set norm to one, leave gamma at zero
-	nuisance_init[1]=0;
-	std::vector<double> ret = v.Chi2MinNuisance(nuisance_init);	
-
-/*
-	double step=0.1;
-	for (int x=0; x<10; x++)
-	{
-		std::cout << LogGaussianProbability(1-x*step,1,0.4) << std::endl;
-	}
-	for (int x=0; x<10; x++)
-	{
-		std::cout << LogGaussianProbability(1+x*step,1,0.4) << std::endl;
-	}
-	Verosimilitud v(3);
-	double last=0;
-	for (int x=1; x<10; x++)
-	{
-		//std::cout << "N: " << 2*x << " AVG: " <<	v.SimpsAvg(1.57,3.14,100,106,0,2*x) << std::endl;
-		double val=v.SimpsAvg(1,2,1,2,0,2*x);
-		std::cout << "N: " << 2*x << " AVG: " <<	fabs(val-last) << std::endl;
-		std::cout << "N: " << 2*x << " AVG: " <<	val << std::endl;
-		last=val;
-	}
-*/
-
-/*
-	
-
-	v.CalculateExpectation();
-
-
-
-
-	std::cout << "Chi2: " << ret[0] << std::endl;
-	std::cout << "Norm: " << ret[1] << std::endl;
-	std::cout << "Gamma: " << ret[2] << std::endl;
-*/
-	return 0;
-}
