@@ -515,16 +515,18 @@ std::vector<double> Verosimilitud::Chi2MinNuisance(std::vector<double> param)
   nuisance(3)=(param)[3];
 
 	
+//bounds 4-5 sigma
+	
   dlib::matrix<double,0,1> lo_bounds(4);
   dlib::matrix<double,0,1> hi_bounds(4);
   lo_bounds(0)=0.01;
-  lo_bounds(1)=-2.0;
-  lo_bounds(2)=0.01;
-  lo_bounds(3)=0.01;
-  hi_bounds(0)=2.0;
-  hi_bounds(1)=2.0;
-  hi_bounds(2)=2.0;
-  hi_bounds(3)=2.0;
+  lo_bounds(1)=-2.5;
+  lo_bounds(2)=0.5;
+  lo_bounds(3)=0.875;
+  hi_bounds(0)=3.0;
+  hi_bounds(1)=2.5;
+  hi_bounds(2)=1.5;
+  hi_bounds(3)=1.125;
 
 
 	// Marjon: error is in the line below
