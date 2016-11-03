@@ -1,5 +1,8 @@
 #! /usr/bin/python
-import Verosim as VS
+
+#GetExpectationVec is now obsolete, so I think this whole file might be useless...
+
+"""import Verosim as VS
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
@@ -104,6 +107,7 @@ ax.set_title("Ratio in cosz")
 #n, bins, patches = plt.hist(cosz_marg, bins=cosz, facecolor='green', alpha=0.75)
 
 """
+"""
 #H, eprox, cosz = np.histogram2d(y, x, bins=(eprox, cosz))
 fig=plt.figure()
 #plt.set_title('pcolormesh: exact bin edges')
@@ -111,6 +115,7 @@ X, Y = np.meshgrid( cosz,eprox)
 plt.pcolormesh(X, Y, expectation,norm=LogNorm(),cmap='PuBu_r')
 plt.colorbar()
 #ax.set_aspect('equal')
+"""
 """
 #plt.show()
 
@@ -136,4 +141,4 @@ plt.show()
 #H, eprox, cosz = plt.histogram2d(data_eproxy, data_cosz, bins=(eprox, cosz))
 #plt.show()
 
-
+"""

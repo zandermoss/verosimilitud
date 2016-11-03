@@ -12,6 +12,7 @@ CC = clang++
 
 # define any compile-time flags
 CFLAGS = -Wall -g -fPIC -std=c++11
+#CFLAGS = -Wall -O3  -fPIC -std=c++11 # use this when actually running massively
 
 # define any directories containing header files other than /usr/include
 #

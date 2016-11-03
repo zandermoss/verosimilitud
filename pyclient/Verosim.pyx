@@ -56,8 +56,8 @@ cdef class Verosim:
 
 	def GetPertExpectationVec(self,vector[double] nuisance):
 		return self._c_verosimilitud.GetPertExpectationVec(nuisance)
-	def GetExpectationVec(self):
-		return self._c_verosimilitud.GetExpectationVec()
+#	def GetExpectationVec(self):
+#		return self._c_verosimilitud.GetExpectationVec()
 	def GetAreaVec(self):
 		return self._c_verosimilitud.GetAreaVec()
 	def GetFluxVec(self):

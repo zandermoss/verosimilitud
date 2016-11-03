@@ -42,7 +42,7 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigne
 
 
 	//Bin data from 2010, 2011, or both!
-	std::string fnames[2] = {"2010.dat","2011.dat"};
+	std::string fnames[2] = {"./2010.dat","./2011.dat"};
 
 	unsigned int datadims[2];
 	datadims[0]=EnergyProxyBins;
@@ -86,7 +86,7 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigne
 		(*eprox_centers)[i] = (EnergyProxyEdges->Index(&i)+EnergyProxyEdges->Index(&ip1))/2.0;
 	}
 
-	for (unsigned int i; i<CosZenithBins; i++)
+	for (unsigned int i=0; i<CosZenithBins; i++)
 	{
 		ip1=i+1;
 		(*coszenith_centers)[i] = (CosZenithEdges->Index(&i)+CosZenithEdges->Index(&ip1))/2.0;
@@ -120,7 +120,7 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigne
 
 	void Verosimilitud::SetCoszCuts(std::vector<double> cuts)
 	{
-		for (unsigned int i; i<cuts.size(); i++)
+		for (unsigned int i=0; i<cuts.size(); i++)
 		{
 			(*cosz_cuts)[i]=cuts[i];
 			std::cout <<"COSZ CUTS: " << (*cosz_cuts)[i] << std::endl;
@@ -130,7 +130,7 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigne
 	void Verosimilitud::SetEproxCuts(std::vector<double> cuts)
 	{
 
-		for (unsigned int i; i<cuts.size(); i++)
+		for (unsigned int i=0; i<cuts.size(); i++)
 		{
 			(*eprox_cuts)[i]=cuts[i];
 			std::cout <<"EPROX CUTS: "  << (*eprox_cuts)[i] << std::endl;
@@ -265,11 +265,6 @@ double Verosimilitud::CosSimpsAvg(double coszmin, double coszmax, double emin, d
 }
 */
 
-
-
-
-
-
 void Verosimilitud::CalculateExpectation()
 {
 	unsigned int dyn_indices[3];
@@ -281,12 +276,10 @@ void Verosimilitud::CalculateExpectation()
 
 	unsigned int exp_dims[2]={EnergyProxyBins,CosZenithBins};
 
-//	expectation = new Tensor(2,exp_dims,0);
-
-	Tensor* expectation[4];	
+	expectation.resize(4);	
 	for (int i = 0; i<4; i++){
-		expectation[i]= new Tensor(2,exp_dims,0);
-		}
+		expectation[i]= std::make_shared<Tensor>(2,exp_dims,0);
+	}
 
 	unsigned int counter=0;
 
@@ -384,6 +377,7 @@ void Verosimilitud::CalculateExpectation()
 
 }
 
+//GetExpectationVec is now meaningless. There is no expectation without nuisance parameters.
 /*
 std::vector<double> Verosimilitud::GetExpectationVec(void)
 {
@@ -463,7 +457,7 @@ std::vector<double> Verosimilitud::GetPertExpectationVec(std::vector<double> nui
             indices[1]=z;
             
             for (unsigned int i=0; i<4; i++){
-            	scalar_exp[i]=expectation[i].Index(indices);
+            	scalar_exp[i]=expectation[i]->Index(indices);
             }
             
             pert_scalar_exp = norm*pow(center/E0,-gamma)*(scalar_exp[0]+r_kpi*scalar_exp[2]+r_nubarnu*(scalar_exp[1]+r_kpi*scalar_exp[3]));
@@ -568,12 +562,11 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 
 	//calculate unsaturated log-likelihood with nuisance-perturbed expectation
 
-//	std::cout << "EPROX CUTS: " <<(*eprox_cuts)[0] << "    "  << (*eprox_cuts)[1] << std::endl;
-
 	for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
    	{
    	
    	center=(*eprox_centers)[ep];
+   	
    	
 		for(unsigned int z=(*cosz_cuts)[0]; z<(*cosz_cuts)[1]; z++)
 		{
@@ -581,7 +574,11 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 			indices[1]=z;
   
 			for (unsigned int i=0; i<4; i++){   
-            	scalar_exp[i]=expectation[i].Index(indices);
+
+            	scalar_exp[i]=expectation[i]->Index(indices);
+            	
+            	//std::cout<<"fixed!"<<std::endl;
+            	
 			}
 
 			scalar_data=data->Index(indices);
@@ -602,6 +599,7 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 		}
 	}	
 
+	//std::cout<<"V.Chi2, stop loop"<<std::endl;
 
 	double norm_penalty = LogGaussianProbability(norm,norm_mean,norm_sigma);
 	double gamma_penalty = LogGaussianProbability(gamma,gamma_mean,gamma_sigma);
@@ -648,13 +646,6 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 }
 
 
-
-
-
-
-
-
-
 dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0,1>& nuisance)
 {
 	unsigned int indices[2];
@@ -690,7 +681,7 @@ dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0
 			indices[1]=z;
 			
 			for (unsigned int i = 0; i<4; i++){
-            	scalar_exp[i]=expectation[i].Index(indices);
+            	scalar_exp[i]=expectation[i]->Index(indices);
 			}
 			
 			scalar_data=data->Index(indices);
@@ -730,5 +721,24 @@ dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0
 	gradient(3) = grad3;
 
 	return gradient;
+}
+
+
+double Verosimilitud::LLH(std::vector<double> param)
+{
+	
+	CalculateExpectation();
+
+  	dlib::matrix<double,0,1> nuisance(4);
+  	
+  	nuisance(0)=(param)[0];
+  	nuisance(1)=(param)[1];
+  	nuisance(2)=(param)[2];
+  	nuisance(3)=(param)[3];
+
+	std::cout<<"LLH calls Chi2"<<std::endl;
+
+	//problem below this line
+	return Chi2(nuisance);
 }
 

@@ -13,7 +13,7 @@ cdef extern from "Verosimilitud.h":
 		#vector[double] GetDataVec(double scale)
 		vector[double] GetDataVec()
 		vector[double] GetPertExpectationVec(vector[double] nuisance)
-		vector[double] GetExpectationVec()
+#		vector[double] GetExpectationVec()
 		vector[double] GetAreaVec()
 		vector[double] GetFluxVec()
 		#vector[double] GetExpectationVec()
