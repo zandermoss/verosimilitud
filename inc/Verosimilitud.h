@@ -176,7 +176,8 @@ class Verosimilitud {
             \return vector linearization of expectation tensor.
         */
 
-		std::vector<double> GetExpectationVec(void);
+	// This is obsolete now that I've added in all four nuisance parameters.
+	//	std::vector<double> GetExpectationVec(void);
 
 		//--------------------------------------------------------//
         //! Returns the linearized, perturbed expectation tensor as a vector.
@@ -227,6 +228,8 @@ class Verosimilitud {
 		*/
 
 		double Chi2(const dlib::matrix<double,0,1>& nuisance);
+
+
 
 		//--------------------------------------------------------//
         //! Calculates the gradient of the Chi2 returned by "::"Chi2 in the space of nuisance parameters. 
@@ -319,6 +322,12 @@ class Verosimilitud {
 		//! The number of bins to use in expectation and data along the energy proxy axis.
 
     	const unsigned int EnergyProxyBins=50;
+    	
+    	
+
+		//--------------Marjon new function ---------------------//
+		//! One stop shop for LLH
+		double LLH(std::vector<double> nuisance);
 
 		
 
@@ -364,9 +373,9 @@ class Verosimilitud {
 		std::vector<double>* coszenith_centers;
 
 
-		Tensor* expectation;
 
-
+		//is this a problem below???
+		std::vector< std::shared_ptr<Tensor> > expectation;
 
 
 	    EffectiveArea* eff_area;

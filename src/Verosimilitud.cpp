@@ -67,8 +67,17 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigne
 	eprox_cuts = new std::vector<double>(2,0);
 	cosz_cuts = new std::vector<double>(2,0);
 
-	(*eprox_cuts)[0]=0;
-	(*eprox_cuts)[1]=EnergyProxyBins;
+
+	//eprox bin	#		eprox center
+	//			5		357.167
+	//			6		449.647
+	//			22		17900.8
+	//			23		22535.7
+
+	(*eprox_cuts)[0]=6;
+	(*eprox_cuts)[1]=23;
+//	(*eprox_cuts)[0]=0;
+//	(*eprox_cuts)[1]=EnergyProxyBins;
 
 	(*cosz_cuts)[0]=0;
 	(*cosz_cuts)[1]=CosZenithBins;
@@ -567,7 +576,8 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
    	
    	center=(*eprox_centers)[ep];
    	
-   	
+ 		std::cout<<"eprox_center: "<<center<<" ep: "<<ep<<std::endl;
+  	
 		for(unsigned int z=(*cosz_cuts)[0]; z<(*cosz_cuts)[1]; z++)
 		{
 			indices[0]=ep;
@@ -675,6 +685,7 @@ dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0
 	for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
    	{
 		center=(*eprox_centers)[ep];
+		
 		for(unsigned int z=(*cosz_cuts)[0]; z<(*cosz_cuts)[1]; z++)
 		{
 			indices[0]=ep;
@@ -736,9 +747,6 @@ double Verosimilitud::LLH(std::vector<double> param)
   	nuisance(2)=(param)[2];
   	nuisance(3)=(param)[3];
 
-	std::cout<<"LLH calls Chi2"<<std::endl;
-
-	//problem below this line
-	return Chi2(nuisance);
+	return Chi2(nuisance)/550.0;
 }
 
