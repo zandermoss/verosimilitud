@@ -292,7 +292,7 @@ void Verosimilitud::CalculateExpectation()
 
 	unsigned int counter=0;
 
-	std::cout << "AtLoops" << std::endl;
+//	std::cout << "AtLoops" << std::endl;
 	
 	//Loop over true energies.
 	for(unsigned int e=0; e<NeutrinoEnergyBins; e++)
@@ -507,7 +507,56 @@ std::vector<double> Verosimilitud::GetDataVec(void)
 
 
 
+std::vector<double> Verosimilitud::MinLLH(std::vector<double> param, std::vector<double> low_bound, std::vector<double> high_bound, std::vector<bool> param_to_minimize)
+{
+	if(param.size() != param_to_minimize.size()){
+		std::cout << "sizes param do not match. break" <<std::endl;
+		exit(1);
+	}
 
+	if(low_bound.size() != param_to_minimize.size()){
+		std::cout << "sizes low do not match. break" <<std::endl;
+		exit(1);
+	}
+
+	if(high_bound.size() != param_to_minimize.size()){
+		std::cout << "sizes high do not match. break" <<std::endl;
+		exit(1);
+	}
+
+	unsigned int number_of_parameters_to_minimize = std::count(param_to_minimize.begin(),param_to_minimize.end(),true);
+ 
+	//set initial values and boundaries
+	dlib::matrix<double,0,1> nuisance(number_of_parameters_to_minimize);
+	dlib::matrix<double,0,1> lo_bounds(number_of_parameters_to_minimize);
+	dlib::matrix<double,0,1> hi_bounds(number_of_parameters_to_minimize);
+	unsigned int j=0;
+	for(unsigned int i=0; i<param.size(); i++){
+		if(param_to_minimize[i]){
+			nuisance(j)=param[i];
+			lo_bounds(j)=low_bound[i];
+			hi_bounds(j)=high_bound[i];
+			j++;
+		}
+	}
+	
+	dlib::find_min_box_constrained(dlib::bfgs_search_strategy(),
+							   dlib::objective_delta_stop_strategy(1e-7),
+							   Chi2_caller(this,param,param_to_minimize),
+							   Chi2grad_caller(this,param,param_to_minimize),
+							   nuisance,
+							   lo_bounds,
+							   hi_bounds);
+
+	std::vector<double> ret(param.size()+1,0);
+	for (unsigned int i=0; i<param.size(); i++){
+		ret[i] = nuisance(i);
+	}
+	ret[param.size()] = Chi2(nuisance);
+	return ret;
+}
+
+/*
 std::vector<double> Verosimilitud::Chi2MinNuisance(std::vector<double> param)
 {
 //Minimize over nuisance parameters. 
@@ -532,8 +581,7 @@ std::vector<double> Verosimilitud::Chi2MinNuisance(std::vector<double> param)
   hi_bounds(3)=1.125;
 
 
-	// Marjon: error is in the line below
-  dlib::find_min_box_constrained(dlib::bfgs_search_strategy(), dlib::objective_delta_stop_strategy(1e-7),Chi2_caller(this),Chi2grad_caller(this),nuisance,lo_bounds,hi_bounds);
+dlib::find_min_box_constrained(dlib::bfgs_search_strategy(), dlib::objective_delta_stop_strategy(1e-7),Chi2_caller(this),Chi2grad_caller(this),nuisance,lo_bounds,hi_bounds);
 
 	std::vector<double> ret(5,0);
 	ret[0]=Chi2(nuisance);
@@ -545,7 +593,7 @@ std::vector<double> Verosimilitud::Chi2MinNuisance(std::vector<double> param)
 	return ret;
 }
 
-
+*/
 
 
 
@@ -576,7 +624,7 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
    	
    	center=(*eprox_centers)[ep];
    	
- 		std::cout<<"eprox_center: "<<center<<" ep: "<<ep<<std::endl;
+// 		std::cout<<"eprox_center: "<<center<<" ep: "<<ep<<std::endl;
   	
 		for(unsigned int z=(*cosz_cuts)[0]; z<(*cosz_cuts)[1]; z++)
 		{
@@ -747,6 +795,6 @@ double Verosimilitud::LLH(std::vector<double> param)
   	nuisance(2)=(param)[2];
   	nuisance(3)=(param)[3];
 
-	return Chi2(nuisance)/550.0;
+	return Chi2(nuisance);
 }
 

@@ -215,7 +215,7 @@ class Verosimilitud {
         */
 
 		std::vector<double> Chi2MinNuisance(std::vector<double> nuisance);
-
+std::vector<double> MinLLH(std::vector<double> param, std::vector<double> low_bound, std::vector<double> high_bound, std::vector<bool> param_to_minimize);
 
 		//--------------------------------------------------------//
         //! Calculates Chi2 from IC data and the calculated expectation tensors. Perturbs the expectation tensor according to input nuisance parameters.
@@ -419,24 +419,74 @@ class Verosimilitud {
 class Chi2_caller
 {
 	private:
-		Verosimilitud* my_verosim;
+		// members
+		Verosimilitud* verosim;
+		std::vector<double> param;
+		std::vector<bool> param_to_minimize;
 	public:
-		Chi2_caller(Verosimilitud * verosim)
-		{
-			my_verosim = verosim;
-		}
-
-
+		// constructor
+		Chi2_caller(Verosimilitud* verosim,
+					std::vector<double> param,
+					std::vector<bool> param_to_minimize):
+					verosim(verosim),
+					param(param),
+					param_to_minimize(param_to_minimize)
+		{};
+		// operator overloading
 		double operator() (const dlib::matrix<double,0,1>& nuisance) const
 		{
-			return my_verosim->Chi2(nuisance);
+			dlib::matrix<double,0,1> param_eval(param.size());
+			unsigned int j=0;
+			for(unsigned int i=0; i<param.size(); i++){
+				if(param_to_minimize[i]){
+					param_eval(i)=nuisance(j);
+					j++;
+				} else {
+					param_eval(i) = param[i];
+				}
+			}
+			
+			return verosim->Chi2(param_eval);
 		}
+};
 
+class Chi2grad_caller
+{
+	private:
+		// members
+		Verosimilitud* verosim;
+		std::vector<double> param;
+		std::vector<bool> param_to_minimize;
+	public:
+		// constructor
+		Chi2grad_caller(Verosimilitud* verosim,
+						std::vector<double> param,
+						std::vector<bool> param_to_minimize):
+					verosim(verosim),
+					param(param),
+					param_to_minimize(param_to_minimize)
+		{};
+		// operator overloading
+		double operator() (const dlib::matrix<double,0,1>& nuisance) const
+		{
+			dlib::matrix<double,0,1> param_eval(param.size());
+			unsigned int j=0;
+			for(unsigned int i=0; i<param.size(); i++){
+				if(param_to_minimize[i]){
+					param_eval(i)=nuisance(j);
+					j++;
+				} else {
+					param_eval(i) = param[i];
+				}
+			}
+			
+			return verosim->Chi2Gradient(param_eval);
+		}
 };
 
 
 
-
+/*
 class Chi2grad_caller
 {
 	private:
@@ -455,7 +505,6 @@ class Chi2grad_caller
 		}
 
 };
-
-
+*/
 
 #endif // __VEROSIMILILTUD_H_INCLUDED__
