@@ -227,7 +227,7 @@ std::vector<double> MinLLH(std::vector<double> param, std::vector<double> low_bo
 			\return approximate Chi2
 		*/
 
-		double Chi2(const dlib::matrix<double,0,1>& nuisance);
+		double Chi2(const dlib::matrix<double,0,1>& nuisance) const;
 
 
 
@@ -239,7 +239,7 @@ std::vector<double> MinLLH(std::vector<double> param, std::vector<double> low_bo
 			\return the gradient in nuisance space (love that name), again in the dlib::matrix format.
 		*/
 
-		dlib::matrix<double,0,1> Chi2Gradient(const dlib::matrix<double,0,1>& nuisance);
+		dlib::matrix<double,0,1> Chi2Gradient(const dlib::matrix<double,0,1>& nuisance) const;
 
 
 		//--------------------------------------------------------//
@@ -409,7 +409,6 @@ std::vector<double> MinLLH(std::vector<double> param, std::vector<double> low_bo
 	double r_nubarnu_mean=1;
 	double r_nubarnu_sigma=0.025;
 
-
    
 // 	   Set_data()
     
@@ -445,7 +444,11 @@ class Chi2_caller
 					param_eval(i) = param[i];
 				}
 			}
-			
+			/*
+			std::cout << "param: " << nuisance << std:: endl;	
+			std::cout << "eparam: " << param_eval << std:: endl;	
+			std::cout << "Chi2 " << verosim->Chi2(param_eval) << std::endl;
+			*/
 			return verosim->Chi2(param_eval);
 		}
 };
@@ -467,8 +470,8 @@ class Chi2grad_caller
 					param_to_minimize(param_to_minimize)
 		{};
 		// operator overloading
-		double operator() (const dlib::matrix<double,0,1>& nuisance) const
-		{
+		dlib::matrix<double,0,1> operator() (const dlib::matrix<double,0,1>& nuisance) const
+		{	
 			dlib::matrix<double,0,1> param_eval(param.size());
 			unsigned int j=0;
 			for(unsigned int i=0; i<param.size(); i++){
@@ -479,12 +482,27 @@ class Chi2grad_caller
 					param_eval(i) = param[i];
 				}
 			}
+			/*	
+			std::cout << "param: " << nuisance << std:: endl;	
+			std::cout << "eparam: " << param_eval << std:: endl;	
+			std::cout << "Chi2G " << verosim->Chi2Gradient(param_eval) << std::endl;
+			*/
 			
-			return verosim->Chi2Gradient(param_eval);
+			// this two do not have the same length!!
+			dlib::matrix<double,0,1> eval_grad = verosim->Chi2Gradient(param_eval);
+			dlib::matrix<double,0,1> eval_grad_return(nuisance.size());
+			
+			unsigned jj=0;
+			for(unsigned int i=0; i<param.size(); i++){
+				if(param_to_minimize[i]){
+					eval_grad_return(jj)=eval_grad(i);
+					jj++;
+				}
+			}	
+			
+			return eval_grad_return;
 		}
 };
-
-
 
 /*
 class Chi2grad_caller

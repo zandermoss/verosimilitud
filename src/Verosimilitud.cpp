@@ -102,7 +102,7 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigne
 	}
 	
 
-
+	CalculateExpectation();
 
 }
 
@@ -502,11 +502,6 @@ std::vector<double> Verosimilitud::GetDataVec(void)
 	return datvec;
 }
 
-
-
-
-
-
 std::vector<double> Verosimilitud::MinLLH(std::vector<double> param, std::vector<double> low_bound, std::vector<double> high_bound, std::vector<bool> param_to_minimize)
 {
 	if(param.size() != param_to_minimize.size()){
@@ -540,6 +535,13 @@ std::vector<double> Verosimilitud::MinLLH(std::vector<double> param, std::vector
 		}
 	}
 	
+	/* all ok
+	std::cout << "Input" << std::endl;
+	std::cout << nuisance << std::endl;
+	std::cout << lo_bounds << std::endl;
+	std::cout << hi_bounds << std::endl;
+	*/
+	
 	dlib::find_min_box_constrained(dlib::bfgs_search_strategy(),
 							   dlib::objective_delta_stop_strategy(1e-7),
 							   Chi2_caller(this,param,param_to_minimize),
@@ -549,10 +551,21 @@ std::vector<double> Verosimilitud::MinLLH(std::vector<double> param, std::vector
 							   hi_bounds);
 
 	std::vector<double> ret(param.size()+1,0);
+
+	dlib::matrix<double,0,1> param_eval(param.size());
+	unsigned int jj=0;
 	for (unsigned int i=0; i<param.size(); i++){
-		ret[i] = nuisance(i);
+		if(param_to_minimize[i]){
+			ret[i] = nuisance(jj);
+			param_eval(i) = nuisance(jj);
+			jj++;
+		} else {
+			ret[i] = param[i];
+			param_eval(i) = param[i];
+		}
 	}
-	ret[param.size()] = Chi2(nuisance);
+	ret[param.size()] = Chi2(param_eval);
+
 	return ret;
 }
 
@@ -597,7 +610,7 @@ dlib::find_min_box_constrained(dlib::bfgs_search_strategy(), dlib::objective_del
 
 
 
-double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
+double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance) const
 {
 	unsigned int indices[2];
 	double scalar_exp[4];
@@ -624,7 +637,7 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
    	
    	center=(*eprox_centers)[ep];
    	
-// 		std::cout<<"eprox_center: "<<center<<" ep: "<<ep<<std::endl;
+ //		std::cout<<"eprox_center: "<<center<<" ep: "<<ep<<std::endl;
   	
 		for(unsigned int z=(*cosz_cuts)[0]; z<(*cosz_cuts)[1]; z++)
 		{
@@ -670,9 +683,7 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 //	std::cout << "GAMMAmu  " << gamma_mean << std::endl;
 //	std::cout << "GAMMAsig  " << gamma_sigma << std::endl;
 
-
 	llh+=norm_penalty + gamma_penalty + r_kpi_penalty + r_nubarnu_penalty;
-
 
 	//Calculate saturated log-likelihood
 
@@ -685,8 +696,7 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 			scalar_data=data->Index(indices);
 			//raw_scalar_data=data->Index(indices);
 			//scalar_data=1.3*raw_scalar_data*pow((*eprox_centers)[ep]/34592.0,0.2); // fixme what is 34592 number?
-			double satprob;
-			satprob=LogPoissonProbability(scalar_data,scalar_data);
+			double satprob=LogPoissonProbability(scalar_data,scalar_data);
 			if (std::isnan(satprob))
 			{
 				satprob=0;
@@ -695,16 +705,15 @@ double Verosimilitud::Chi2(const dlib::matrix<double,0,1>& nuisance)
 
 		}
 	}	
-	
 
 //	std::cout << "CHI2: " << 2*(sllh-llh) << std::endl;
 //	std::cout << std::endl;
 				
-	return 2*(sllh-llh);
+	return 2.*(sllh-llh);
 }
 
 
-dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0,1>& nuisance)
+dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0,1>& nuisance) const
 {
 	unsigned int indices[2];
 	double scalar_exp[4];
@@ -728,7 +737,7 @@ dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0
 	double grad3=0;
 
 
-	double strange_constant=34592.0;
+	const double strange_constant=34592.0;
 
 	for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
    	{
@@ -760,7 +769,7 @@ dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0
 
 		}
 	}	
-
+	
 	grad0+=(norm-norm_mean)/pow(norm_sigma,2);
 	grad1+=(gamma-gamma_mean)/pow(gamma_sigma,2);
 	grad2+=(r_kpi-r_kpi_mean)/pow(r_kpi_sigma,2);
@@ -785,8 +794,6 @@ dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0
 
 double Verosimilitud::LLH(std::vector<double> param)
 {
-	
-	CalculateExpectation();
 
   	dlib::matrix<double,0,1> nuisance(4);
   	
