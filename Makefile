@@ -7,7 +7,7 @@
 
 # define the C compiler to use
 #CC = gcc
-CC = clang++
+#CC = clang++
 #CC = g++
 
 # define any compile-time flags
@@ -16,7 +16,7 @@ CFLAGS = -Wall -g -fPIC -std=c++11
 
 # define any directories containing header files other than /usr/include
 #
-INCLUDES = -I /Users/marjon/Dropbox\ \(MIT\)/work/IceCube/decay/neutrino_decay/verosimilitud/inc -I/usr/include/python2.7 -I/usr/local/Cellar/hdf5/1.8.16_1/include -I/Users/marjon/local/dlib-18.18
+INCLUDES = -I./inc -I/usr/include/python2.7 -I/usr/local/Cellar/hdf5/1.8.16_1/include -I/Users/marjon/local/dlib-18.18
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
@@ -58,16 +58,16 @@ all:	$(SHARED)
 		@echo  Caller has been compiled
 
 $(SHARED): $(OBJS) 
-		$(CC) $(CFLAGS) -shared $(INCLUDES) -o $(SHARED) $(OBJS) $(LFLAGS) $(LIBS)
+		$(CXX) $(CFLAGS) -shared $(INCLUDES) -o $(SHARED) $(OBJS) $(LFLAGS) $(LIBS)
 #$(SHARED): $(OBJS) 
-#		$(CC) $(CFLAGS) $(INCLUDES) -o $(SHARED) $(OBJS) $(LFLAGS) $(LIBS)
+#		$(CXX) $(CFLAGS) $(INCLUDES) -o $(SHARED) $(OBJS) $(LFLAGS) $(LIBS)
 
 # this is a suffix replacement rule for building .o's from .c's
 # it uses automatic variables $<: the name of the prerequisite of
 # the rule(a .c file) and $@: the name of the target of the rule (a .o file) 
 # (see the gnu make manual section about automatic variables)
 .c.o:
-		$(CC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
+		$(CXX) $(CFLAGS) $(INCLUDES) -c $<  -o $@
 
 clean:
 		$(RM) *.o *~ $(SHARED)
