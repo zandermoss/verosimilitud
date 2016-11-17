@@ -17,7 +17,7 @@
 #include <dlib/member_function_pointer.h>
 
 
-Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigned int hiyear)
+Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigned int hiyear, pyoscfunc de_solv, void* user_data)
 {
 	numneu=my_numneu;	
 
@@ -101,7 +101,7 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigne
 		(*coszenith_centers)[i] = (CosZenithEdges->Index(&i)+CosZenithEdges->Index(&ip1))/2.0;
 	}
 	
-
+	SetDeSolver(de_solver, user_data);
 	CalculateExpectation();
 
 }
@@ -319,7 +319,7 @@ void Verosimilitud::CalculateExpectation()
 					double CosZenithMax=CosZenithEdges->Index(&zp1);
 					double zavg = (CosZenithMin+CosZenithMax)/2.0;
 
-					//double oscprob = SimpsAvg(CosZenithMin,CosZenithMax,eMin,eMax,(double)anti, simps_nintervals);
+					double oscprob = SimpsAvg(CosZenithMin,CosZenithMax,eMin,eMax,(double)anti, simps_nintervals);
 					//uncomment above to let neutrinos oscillate
 
 					//Loop over years 2010, 2011
@@ -361,8 +361,8 @@ void Verosimilitud::CalculateExpectation()
 							unsigned int exp_indices[2]={ep,z};
 
 							double last=expectation[which_flux]->Index(exp_indices);
-							//double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr*oscprob;
-							double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr;
+							double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr*oscprob;
+							// double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr;
 
 							expectation[which_flux]->SetIndex(exp_indices,current); //make two separate expectations ->make expectation an array
 	
@@ -542,8 +542,16 @@ std::vector<double> Verosimilitud::MinLLH(std::vector<double> param, std::vector
 	std::cout << hi_bounds << std::endl;
 	*/
 	
-	dlib::find_min_box_constrained(dlib::bfgs_search_strategy(),
-							   dlib::objective_delta_stop_strategy(1e-7),
+// 	dlib::find_min_box_constrained(dlib::bfgs_search_strategy(),
+// 							   dlib::objective_delta_stop_strategy(1e-7),
+// 							   Chi2_caller(this,param,param_to_minimize),
+// 							   Chi2grad_caller(this,param,param_to_minimize),
+// 							   nuisance,
+// 							   lo_bounds,
+// 							   hi_bounds);
+
+	dlib::find_min_box_constrained(dlib::lbfgs_search_strategy(10),
+							   dlib::gradient_norm_stop_strategy(1e-1),
 							   Chi2_caller(this,param,param_to_minimize),
 							   Chi2grad_caller(this,param,param_to_minimize),
 							   nuisance,
