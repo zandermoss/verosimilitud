@@ -46,8 +46,8 @@ cdef class Verosim:
 	def CalculateExpectation(self):
 		self._c_verosimilitud.CalculateExpectation()
 
-	def Chi2MinNuisance(self,vector[double] nuisance):
-		return self._c_verosimilitud.Chi2MinNuisance(nuisance)
+#	def Chi2MinNuisance(self,vector[double] nuisance):
+#		return self._c_verosimilitud.Chi2MinNuisance(nuisance)
 
 	#def GetDataVec(self,scale):
 	#	return self._c_verosimilitud.GetDataVec(scale)
