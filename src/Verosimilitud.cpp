@@ -37,8 +37,8 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigne
     CosZenithEdges = eff_area->GetEdge(edge_indices);
     edge_indices[3] = 2;
     EnergyProxyEdges = eff_area->GetEdge(edge_indices);
-	unsigned int ind1 = 6;
-	unsigned int ind2 = EnergyProxyBins-17;
+//	unsigned int ind1 = 6;
+//	unsigned int ind2 = EnergyProxyBins-17;
 
 
 	//Bin data from 2010, 2011, or both!
@@ -101,7 +101,8 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigne
 		(*coszenith_centers)[i] = (CosZenithEdges->Index(&i)+CosZenithEdges->Index(&ip1))/2.0;
 	}
 	
-	SetDeSolver(de_solver, user_data);
+	SetSimpsNIntervals(2);
+	SetDeSolver(de_solver, user_data);	
 	CalculateExpectation();
 
 }
@@ -157,7 +158,10 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigne
 			argument.push_back(energy);
 			argument.push_back(zenith);
 			argument.push_back(anti);
+			
+			
 			double osc_prob = de_solver(argument,user_data);	
+					
 			std::cout << "  ZENITH: " << zenith << "  ENERGY: " << energy << " ANTI: " << anti  << "  PROB: " << osc_prob << std::endl;				
 			return osc_prob;
    		}
@@ -205,10 +209,17 @@ double Verosimilitud::TestFunction(double e, double z)
 
 double Verosimilitud::SimpsAvg(double coszmin,double coszmax, double emin, double emax, double anti, int nintervals_e)
 {
+
+	std::cout<<"SimpsAvg 0"<<std::endl;
+	
 	double width = (emax-emin)/(double)nintervals_e;
 	double integral=0;
 	double mean=0;
 	double coszval;
+
+	std::cout<<"SimpsAvg 1"<<std::endl;
+
+
 	for(int j=0; j<2; j++)
 	{
 		coszval = coszmin+(double)j*(coszmax-coszmin);
@@ -280,9 +291,7 @@ void Verosimilitud::CalculateExpectation()
 	unsigned int exp_indices[2];
 	unsigned int area_indices[3];
 	unsigned int edge_indices[4];
-	
 	unsigned int which_flux;
-
 	unsigned int exp_dims[2]={EnergyProxyBins,CosZenithBins};
 
 	expectation.resize(4);	
@@ -297,16 +306,16 @@ void Verosimilitud::CalculateExpectation()
 	//Loop over true energies.
 	for(unsigned int e=0; e<NeutrinoEnergyBins; e++)
 	{
-//		std::cout << "TRUE ENERGY: " << e << std::endl;
+		std::cout << "TRUE ENERGY: " << e << std::endl;
 		dyn_indices[0]=e;
 		unsigned int ep1=e+1;	
 		double eMin=NeutrinoEnergyEdges->Index(&e);
 		double eMax=NeutrinoEnergyEdges->Index(&ep1);
-		double eavg = (eMin+eMax)/2.0;
+		//double eavg = (eMin+eMax)/2.0;
 	
 		//Loop over mesons
 		for (unsigned int meson=0; meson<2; meson++)
-		{
+		{	
 			//Loop over matter/antimatter
 			for (unsigned int anti=0; anti<2; anti++)
 			{
@@ -317,15 +326,17 @@ void Verosimilitud::CalculateExpectation()
 					unsigned int zp1=z+1;	
 					double CosZenithMin=CosZenithEdges->Index(&z);
 					double CosZenithMax=CosZenithEdges->Index(&zp1);
-					double zavg = (CosZenithMin+CosZenithMax)/2.0;
+					//double zavg = (CosZenithMin+CosZenithMax)/2.0;
 
 					double oscprob = SimpsAvg(CosZenithMin,CosZenithMax,eMin,eMax,(double)anti, simps_nintervals);
 					//uncomment above to let neutrinos oscillate
 
+					std::cout<<"oscprob: "<<oscprob<<std::endl;
+
 					//Loop over years 2010, 2011
 					for(unsigned int year=data_years[0]; year<data_years[1]; year++)
 					{
-//						std::cout << "YEAR: " << year << std::endl;
+						std::cout << "YEAR: " << year << std::endl;
 						//Do muon neutrinos only: no loop over flavor.
 						unsigned int flavor=0;
 
@@ -745,7 +756,7 @@ dlib::matrix<double,0,1> Verosimilitud::Chi2Gradient(const dlib::matrix<double,0
 	double grad3=0;
 
 
-	const double strange_constant=34592.0;
+//	const double strange_constant=34592.0;
 
 	for(unsigned int ep=(*eprox_cuts)[0]; ep<(*eprox_cuts)[1]; ep++)
    	{
