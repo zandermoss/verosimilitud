@@ -9,5 +9,6 @@ cp libverosimilitud.so ..
 cd pyclient
 sh pycompile.sh
 cp Verosim.so ../..
-cd ../..
-sudo install_name_tool -change libverosimilitud.so "/Users/marjon/Dropbox (MIT)/work/IceCube/decay/neutrino_decay/libverosimilitud.so" "/Users/marjon/Dropbox (MIT)/work/IceCube/decay/neutrino_decay/Verosim.so"
+#cd ../..
+#sudo install_name_tool -change libverosimilitud.so "/Users/marjon/Dropbox (MIT)/work/IceCube/decay/neutrino_decay/libverosimilitud.so" "/Users/marjon/Dropbox (MIT)/work/IceCube/decay/neutrino_decay/Verosim.so"
+#sudo install_name_tool -change libverosimilitud.so "/Users/marjon/Dropbox (MIT)/work/IceCube/decay/neutrino_decay/libverosimilitud.so" "/Users/marjon/Dropbox (MIT)/work/IceCube/decay/neutrino_decay/Verosim.so"

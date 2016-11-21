@@ -1,18 +1,19 @@
-class Flux
-{
-	
-	public:
+#ifndef __FLUX_H_INCLUDED__
+#define __FLUX_H_INCLUDED__
 
-		Flux(double arg_normalization, double arg_index);
-		double EvaluatePowerlawFlux(double neutrinoEnergy);
-		double IntegratePowerlawFlux(double minEnergy, double maxEnergy);
-		void SetNormalization(double arg_normalization);
-		void SetIndex(double arg_index);
-		double GetNormalization(void);
-		double GetIndex(void);
+class Flux {
 
-	private:
+public:
+  Flux(double arg_normalization, double arg_index);
+  double EvaluatePowerlawFlux(double neutrinoEnergy);
+  double IntegratePowerlawFlux(double minEnergy, double maxEnergy);
+  void SetNormalization(double arg_normalization);
+  void SetIndex(double arg_index);
+  double GetNormalization(void);
+  double GetIndex(void);
 
-		double normalization;
-		double index;
+private:
+  double normalization;
+  double index;
 };
+#endif // __FLUX_H_INCLUDED__
