@@ -79,12 +79,12 @@ public:
 
   Verosimilitud(unsigned int my_numneu, unsigned int loyear,
                 unsigned int hiyear)
-      : Verosimilitud(my_numneu, loyear, hiyear, NULL, NULL),
-        ioscillation(false){};
+      : Verosimilitud(my_numneu, loyear, hiyear, NULL, NULL)
+  {};
   Verosimilitud(unsigned int my_numneu, unsigned int loyear,
                 unsigned int hiyear, pyoscfunc de_solv, void *user_data);
 
-  const bool ioscillation = false;
+  bool ioscillation = false;
 
   //--------------------------------------------------------//
   //! The Destructor
@@ -311,10 +311,6 @@ this function, see the documentation for "::"GetFluxVec
      then the 			minimal-chi2 values for each nuisance parameter
      (indices>0)
 
-  */
-
-  /* No longer using Chi2MinNuisance
-  std::vector<double> Chi2MinNuisance(std::vector<double> nuisance);
   */
 
   std::vector<double> MinLLH(std::vector<double> param,
@@ -616,27 +612,5 @@ public:
     return eval_grad_return;
   }
 };
-
-/*
-class Chi2grad_caller
-{
-        private:
-                Verosimilitud* my_verosim;
-        public:
-
-                Chi2grad_caller(Verosimilitud * verosim)
-                {
-                        my_verosim = verosim;
-                }
-
-
-                dlib::matrix<double,0,1> operator() (const
-dlib::matrix<double,0,1>& nuisance) const
-                {
-                        return my_verosim->Chi2Gradient(nuisance);
-                }
-
-};
-*/
 
 #endif // __VEROSIMILILTUD_H_INCLUDED__

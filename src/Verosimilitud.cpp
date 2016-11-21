@@ -196,52 +196,6 @@ double Verosimilitud::SimpsAvg(double coszmin, double coszmax, double emin,
   }
   return mean;
 }
-/*
-double Verosimilitud::ESimpsAvg(double coszval, double emin, double emax, double
-anti, int nintervals_e)
-{
-        double width = (emax-emin)/(double)nintervals;
-        double integral=0;
-
-        integral+=OscillationProbability(emin,coszval,anti);
-        for (int i=1; i<(nintervals/2 -1); i++)
-        {
-                integral+=2*OscillationProbability(emin+2*(double)i*width,coszval,anti);
-        }
-        for (int i=1; i<(nintervals/2); i++)
-        {
-                integral+=4*OscillationProbability(emin+(2*(double)i-1)*width,coszval,anti);
-        }
-        integral+=OscillationProbability(emax,coszval,anti);
-        integral*=width/3.0;
-
-        return integral
-
-}
-
-double Verosimilitud::CosSimpsAvg(double coszmin, double coszmax, double emin,
-double emax, double anti, int nintervals_cosz, int nintervals_e)
-{
-        double width = (coszmax-coszmin)/(double)nintervals_cosz;
-        double integral=0;
-        double mean;
-
-        integral+=ESimpsAvg(coszmin,emin,emax,anti,nintervals_e);
-        for (int i=1; i<(nintervals_cosz/2 -1); i++)
-        {
-                integral+=2*ESimpsAvg(coszmin+2*(double)i*width,emin,emax,anti,nintervals_e);
-        }
-        for (int i=1; i<(nintervals_cosz/2); i++)
-        {
-                integral+=4*ESimpsAvg(coszmin+(2*(double)i-1)*width,emin,emax,anti,nintervals_e);
-        }
-        integral+=ESimpsAvg(coszmax,emin,emax,anti,nintervals_e);
-        integral*=width/3.0;
-        mean=integral/(coszmax-coszmin);
-        return mean;
-
-}
-*/
 
 void Verosimilitud::CalculateExpectation() {
   unsigned int dyn_indices[3];
@@ -359,22 +313,6 @@ void Verosimilitud::CalculateExpectation() {
   coszenith_edges = new std::vector<double>(
       coszenith_edges_array, coszenith_edges_array + coszenith_size);
 }
-
-// GetExpectationVec is now meaningless. There is no expectation without
-// nuisance parameters.
-/*
-std::vector<double> Verosimilitud::GetExpectationVec(void)
-{
-        double * exparray = expectation->GetDataPointer();
-        unsigned int explen = expectation->GetDataLength();
-        std::vector<double> expvec(exparray, exparray + explen);
-        unsigned int expdims[]={0,0};
-        expectation->GetDims(expdims);
-        exp_dimvec.push_back(expdims[0]);
-        exp_dimvec.push_back(expdims[1]);
-        return expvec;
-}
-*/
 
 std::vector<double> Verosimilitud::GetFluxVec(void)
 // Why is this hard-coded for anti=0?
@@ -540,46 +478,6 @@ std::vector<double> Verosimilitud::MinLLH(std::vector<double> param,
 
   return ret;
 }
-
-/*
-std::vector<double> Verosimilitud::Chi2MinNuisance(std::vector<double> param)
-{
-//Minimize over nuisance parameters.
-  dlib::matrix<double,0,1> nuisance(4);
-  nuisance(0)=(param)[0];
-  nuisance(1)=(param)[1];
-  nuisance(2)=(param)[2];
-  nuisance(3)=(param)[3];
-
-
-//bounds 4-5 sigma
-
-  dlib::matrix<double,0,1> lo_bounds(4);
-  dlib::matrix<double,0,1> hi_bounds(4);
-  lo_bounds(0)=0.01;
-  lo_bounds(1)=-2.5;
-  lo_bounds(2)=0.5;
-  lo_bounds(3)=0.875;
-  hi_bounds(0)=3.0;
-  hi_bounds(1)=2.5;
-  hi_bounds(2)=1.5;
-  hi_bounds(3)=1.125;
-
-
-dlib::find_min_box_constrained(dlib::bfgs_search_strategy(),
-dlib::objective_delta_stop_strategy(1e-7),Chi2_caller(this),Chi2grad_caller(this),nuisance,lo_bounds,hi_bounds);
-
-        std::vector<double> ret(5,0);
-        ret[0]=Chi2(nuisance);
-        ret[1]=nuisance(0);
-        ret[2]=nuisance(1);
-        ret[3]=nuisance(2);
-        ret[4]=nuisance(3);
-
-        return ret;
-}
-
-*/
 
 double Verosimilitud::Chi2(const dlib::matrix<double, 0, 1> &nuisance) const {
   unsigned int indices[2];
