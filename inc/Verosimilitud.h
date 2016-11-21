@@ -26,6 +26,21 @@
 FIXME add links to the relevant functions!
 */
 
+
+
+typedef double (*pyoscfunc)(std::vector<double> argument, void *userdata);
+
+		//--------------------------------------------------------//
+		//! Function wrapping a call to the NuSHEEP survival probability calculation.
+		/*!
+			OscillationProbability is the C++ wrapper used to call the pyoscfunc function proveded by NuSHEEP.
+			\param energy is the neutrino energy, in GeV.
+			\param zenith is the zenith angle (angle from the south pole) corresponding to the vector along which the neutrino propagates from its atmospheric production point to the IC detector at the south pole. For the purposes of these simulations, I have omitted zenith angles from 0 to pi/2, which correspond to production in the sky above the IC detector. The neutrinos only intersect the earth at angles between pi/2 and pi. FIXME: shift this discussion to a more appropriate place? NuSHEEP dox maybe?
+			
+			\param is a switch between neutrino and anti-neutrino mode. 0 indicates a neutrino, and 1 an antineutrino.	
+		*/
+
+
 class Verosimilitud {
 
 	public:
@@ -39,7 +54,7 @@ class Verosimilitud {
 		*/
 
 
-		Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigned int hiyear);
+		Verosimilitud(unsigned int my_numneu,unsigned int loyear, unsigned int hiyear, pyoscfunc de_solv, void* user_data);
 
 
 		
@@ -60,18 +75,6 @@ class Verosimilitud {
 			Some arcane C trickery for passing relevant function data using the void pointer userdata. I never actually came to understand how this works. I just swiped the code from stackexchange:
 			\param userdata void pointer used for sordid data transmission.
 			\param argument	the actual argument, whose nature will be clarified in the documentation surrounding "::"OscillationProbability
-		*/
-
-		typedef double (*pyoscfunc)(std::vector<double> argument, void *userdata);
-
-		//--------------------------------------------------------//
-		//! Function wrapping a call to the NuSHEEP survival probability calculation.
-		/*!
-			OscillationProbability is the C++ wrapper used to call the pyoscfunc function proveded by NuSHEEP.
-			\param energy is the neutrino energy, in GeV.
-			\param zenith is the zenith angle (angle from the south pole) corresponding to the vector along which the neutrino propagates from its atmospheric production point to the IC detector at the south pole. For the purposes of these simulations, I have omitted zenith angles from 0 to pi/2, which correspond to production in the sky above the IC detector. The neutrinos only intersect the earth at angles between pi/2 and pi. FIXME: shift this discussion to a more appropriate place? NuSHEEP dox maybe?
-			
-			\param is a switch between neutrino and anti-neutrino mode. 0 indicates a neutrino, and 1 an antineutrino.	
 		*/
 
 	    double OscillationProbability(double energy,double zenith, double anti);
@@ -214,7 +217,10 @@ class Verosimilitud {
             
         */
 
-		std::vector<double> Chi2MinNuisance(std::vector<double> nuisance);
+/* No longer using Chi2MinNuisance
+std::vector<double> Chi2MinNuisance(std::vector<double> nuisance);
+*/
+
 std::vector<double> MinLLH(std::vector<double> param, std::vector<double> low_bound, std::vector<double> high_bound, std::vector<bool> param_to_minimize);
 
 		//--------------------------------------------------------//
@@ -444,11 +450,11 @@ class Chi2_caller
 					param_eval(i) = param[i];
 				}
 			}
-			/*
-			std::cout << "param: " << nuisance << std:: endl;	
-			std::cout << "eparam: " << param_eval << std:: endl;	
-			std::cout << "Chi2 " << verosim->Chi2(param_eval) << std::endl;
-			*/
+//			/*
+//			std::cout << "param: " << nuisance << std:: endl;	
+//			std::cout << "eparam: " << param_eval << std:: endl;	
+//			std::cout << "Chi2 " << verosim->Chi2(param_eval) << std::endl;
+//			*/
 			return verosim->Chi2(param_eval);
 		}
 };
@@ -482,11 +488,11 @@ class Chi2grad_caller
 					param_eval(i) = param[i];
 				}
 			}
-			/*	
-			std::cout << "param: " << nuisance << std:: endl;	
-			std::cout << "eparam: " << param_eval << std:: endl;	
-			std::cout << "Chi2G " << verosim->Chi2Gradient(param_eval) << std::endl;
-			*/
+//			/*	
+//			std::cout << "param: " << nuisance << std:: endl;	
+//			std::cout << "eparam: " << param_eval << std:: endl;	
+//			std::cout << "Chi2G " << verosim->Chi2Gradient(param_eval) << std::endl;
+//			*/
 			
 			// this two do not have the same length!!
 			dlib::matrix<double,0,1> eval_grad = verosim->Chi2Gradient(param_eval);
