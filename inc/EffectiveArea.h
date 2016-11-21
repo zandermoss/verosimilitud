@@ -11,6 +11,7 @@ public:
   EffectiveArea();
   ~EffectiveArea();
 
+  // first index is year (2010,2011), second flavor (muon, tau), and third neutrino type (neutrino,antineutrino)
   Tensor *GetArea(unsigned int *index);
   Tensor *GetEdge(unsigned int *index);
   double GetLivetime(unsigned int index);

@@ -92,6 +92,20 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu, unsigned int loyear,
         (CosZenithEdges->Index(&i) + CosZenithEdges->Index(&ip1)) / 2.0;
   }
 
+  double *eprox_edges_array = EnergyProxyEdges->GetDataPointer();
+  unsigned int eprox_size = EnergyProxyEdges->GetDataLength();
+  double *energy_edges_array = NeutrinoEnergyEdges->GetDataPointer();
+  unsigned int energy_size = NeutrinoEnergyEdges->GetDataLength();
+  double *coszenith_edges_array = CosZenithEdges->GetDataPointer();
+  unsigned int coszenith_size = CosZenithEdges->GetDataLength();
+
+  eprox_edges = new std::vector<double>(eprox_edges_array,
+                                        eprox_edges_array + eprox_size);
+  energy_edges = new std::vector<double>(energy_edges_array,
+                                         energy_edges_array + energy_size);
+  coszenith_edges = new std::vector<double>(
+      coszenith_edges_array, coszenith_edges_array + coszenith_size);
+
   SetSimpsNIntervals(2);
   SetDeSolver(de_solver, user_data);
   CalculateExpectation();
@@ -206,46 +220,52 @@ void Verosimilitud::CalculateExpectation() {
   unsigned int exp_dims[2] = {EnergyProxyBins, CosZenithBins};
 
   expectation.resize(4);
-  for (int i = 0; i < 4; i++) {
+  for (size_t i = 0; i < 4; i++) {
     expectation[i] = std::make_shared<Tensor>(2, exp_dims, 0);
   }
 
   unsigned int counter = 0;
 
-  //	std::cout << "AtLoops" << std::endl;
-
   // Loop over true energies.
   for (unsigned int e = 0; e < NeutrinoEnergyBins; e++) {
-    std::cout << "TRUE ENERGY: " << e << std::endl;
     dyn_indices[0] = e;
     unsigned int ep1 = e + 1;
     double eMin = NeutrinoEnergyEdges->Index(&e);
     double eMax = NeutrinoEnergyEdges->Index(&ep1);
-    // double eavg = (eMin+eMax)/2.0;
 
-    // Loop over mesons
-    for (unsigned int meson = 0; meson < 2; meson++) {
-      // Loop over matter/antimatter
-      for (unsigned int anti = 0; anti < 2; anti++) {
-        // Loop over coszenith bins.
-        for (unsigned int z = 0; z < CosZenithBins; z++) {
-          dyn_indices[1] = z;
-          unsigned int zp1 = z + 1;
-          double CosZenithMin = CosZenithEdges->Index(&z);
-          double CosZenithMax = CosZenithEdges->Index(&zp1);
-          // double zavg = (CosZenithMin+CosZenithMax)/2.0;
+    // Loop over matter/antimatter
+    for (unsigned int anti = 0; anti < 2; anti++) {
+      // Loop over coszenith bins.
+      for (unsigned int z = 0; z < CosZenithBins; z++) {
+        dyn_indices[1] = z;
+        unsigned int zp1 = z + 1;
+        double CosZenithMin = CosZenithEdges->Index(&z);
+        double CosZenithMax = CosZenithEdges->Index(&zp1);
 
-          double oscprob;
-          if (ioscillation)
-            oscprob = SimpsAvg(CosZenithMin, CosZenithMax, eMin, eMax,
-                               (double)anti, simps_nintervals);
-          else
-            oscprob = 1;
+        double oscprob;
+        if (ioscillation)
+          oscprob = SimpsAvg(CosZenithMin, CosZenithMax, eMin, eMax,
+                             (double)anti, simps_nintervals);
+        else
+          oscprob = 1;
 
+        // Loop over mesons
+        for (unsigned int meson = 0; meson < 2; meson++) {
+
+          if (meson == 0 && anti == 0) {
+            which_flux = 0;
+          } else if (meson == 0 && anti == 1) {
+            which_flux = 1;
+          } else if (meson == 1 && anti == 0) {
+            which_flux = 2;
+          } else if (meson == 1 && anti == 1) {
+            which_flux = 3;
+          }
+
+          flux = conv_flux->GetFlux(&which_flux);
           // Loop over years 2010, 2011
           for (unsigned int year = data_years[0]; year < data_years[1];
                year++) {
-            std::cout << "YEAR: " << year << std::endl;
             // Do muon neutrinos only: no loop over flavor.
             unsigned int flavor = 0;
 
@@ -255,25 +275,11 @@ void Verosimilitud::CalculateExpectation() {
             area = eff_area->GetArea(area_indices);
 
             detcorr = conv_flux->GetDetCorr(&year);
-
-            if (meson == 0 && anti == 0) {
-              which_flux = 0;
-            } else if (meson == 0 && anti == 1) {
-              which_flux = 1;
-            } else if (meson == 1 && anti == 0) {
-              which_flux = 2;
-            } else if (meson == 1 && anti == 1) {
-              which_flux = 3;
-            }
-
-            flux = conv_flux->GetFlux(&which_flux);
-
             // Loop over energy proxy bins.
             for (unsigned int ep = 0; ep < EnergyProxyBins; ep++) {
               dyn_indices[2] = ep;
 
               counter++;
-              // std::cout << counter << std::endl;
 
               double FluxIntegral = flux->Index(dyn_indices);
               // implement DOM correction?
@@ -287,50 +293,14 @@ void Verosimilitud::CalculateExpectation() {
               double current =
                   last +
                   FluxIntegral * EffAreaVal * livetime * DomCorr * oscprob;
-              // double current=last+FluxIntegral*EffAreaVal*livetime*DomCorr;
 
-              expectation[which_flux]->SetIndex(
-                  exp_indices, current); // make two separate expectations
-                                         // ->make expectation an array
+              expectation[which_flux]->SetIndex(exp_indices, current);
             }
           }
         }
       }
     }
   }
-
-  double *eprox_edges_array = EnergyProxyEdges->GetDataPointer();
-  unsigned int eprox_size = EnergyProxyEdges->GetDataLength();
-  double *energy_edges_array = NeutrinoEnergyEdges->GetDataPointer();
-  unsigned int energy_size = NeutrinoEnergyEdges->GetDataLength();
-  double *coszenith_edges_array = CosZenithEdges->GetDataPointer();
-  unsigned int coszenith_size = CosZenithEdges->GetDataLength();
-
-  eprox_edges = new std::vector<double>(eprox_edges_array,
-                                        eprox_edges_array + eprox_size);
-  energy_edges = new std::vector<double>(energy_edges_array,
-                                         energy_edges_array + energy_size);
-  coszenith_edges = new std::vector<double>(
-      coszenith_edges_array, coszenith_edges_array + coszenith_size);
-}
-
-std::vector<double> Verosimilitud::GetFluxVec(void)
-// Why is this hard-coded for anti=0?
-// This is not going to work with the separate Pi, K fluxes
-{
-
-  unsigned int anti = 0;
-  Tensor *my_flux = conv_flux->GetFlux(&anti);
-
-  double *fluxarray = my_flux->GetDataPointer();
-  unsigned int fluxlen = my_flux->GetDataLength();
-  std::cout << "FLUXLEN: " << fluxlen << std::endl;
-  std::vector<double> fluxvec(fluxlen, 0);
-  for (int i = 0; i < fluxlen; i++) {
-    fluxvec[i] = fluxarray[i];
-  }
-
-  return fluxvec;
 }
 
 std::vector<double> Verosimilitud::GetAreaVec(void) {
@@ -492,7 +462,7 @@ double Verosimilitud::Chi2(const dlib::matrix<double, 0, 1> &nuisance) const {
 
   const double norm = nuisance(0);
   const double gamma = nuisance(1);
-  const double r_kpi = nuisance(2); // ratio of kaons to pions
+  const double r_kpi = nuisance(2);     // ratio of kaons to pions
   const double r_nubarnu = nuisance(3); // ratio of nubars to nus
 
   double center;
@@ -587,7 +557,7 @@ Verosimilitud::Chi2Gradient(const dlib::matrix<double, 0, 1> &nuisance) const {
 
   const double norm = nuisance(0);
   const double gamma = nuisance(1);
-  const double r_kpi = nuisance(2); // ratio of kaons to pions
+  const double r_kpi = nuisance(2);     // ratio of kaons to pions
   const double r_nubarnu = nuisance(3); // ratio of nubars to nus
 
   const double E0 = 34592.0;
