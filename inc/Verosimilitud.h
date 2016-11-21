@@ -77,12 +77,16 @@ public:
      included. If [0,1], only 2010, and if [1,2], only 2011.
   */
 
-  Verosimilitud(unsigned int my_numneu, unsigned int loyear,
-                unsigned int hiyear)
-      : Verosimilitud(my_numneu, loyear, hiyear, NULL, NULL)
+  Verosimilitud(unsigned int numneu, unsigned int loyear,
+                unsigned int hiyear,
+                 std::string flux_path, std::string effective_area_path, std::string detector_correction_path)
+      : Verosimilitud(numneu, loyear, hiyear, flux_path, effective_area_path, detector_correction_path,  NULL, NULL)
   {};
-  Verosimilitud(unsigned int my_numneu, unsigned int loyear,
-                unsigned int hiyear, pyoscfunc de_solv, void *user_data);
+
+  Verosimilitud(unsigned int numneu, unsigned int loyear,
+                unsigned int hiyear,
+                 std::string flux_path, std::string effective_area_path, std::string detector_correction_path,
+                 pyoscfunc de_solv, void *user_data);
 
   bool ioscillation = false;
 

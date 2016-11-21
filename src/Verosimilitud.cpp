@@ -16,11 +16,12 @@
 #include <dlib/optimization.h>
 #include <dlib/member_function_pointer.h>
 
-Verosimilitud::Verosimilitud(unsigned int my_numneu, unsigned int loyear,
-                             unsigned int hiyear, pyoscfunc de_solv,
+Verosimilitud::Verosimilitud(unsigned int numneu, unsigned int loyear,
+                             unsigned int hiyear,
+                             std::string flux_path, std::string effective_area_path, std::string detector_correction_path,
+                             pyoscfunc de_solv,
                              void *user_data)
-    : ioscillation(true) {
-  numneu = my_numneu;
+    : ioscillation(true),numneu(numneu) {
 
   // Which years do we want to include?
   data_years[0] = loyear;
@@ -28,8 +29,8 @@ Verosimilitud::Verosimilitud(unsigned int my_numneu, unsigned int loyear,
 
   simps_nintervals = 2;
 
-  eff_area = new EffectiveArea();
-  conv_flux = new ConventionalFlux();
+  eff_area = new EffectiveArea(effective_area_path);
+  conv_flux = new ConventionalFlux(detector_correction_path,flux_path);
 
   unsigned int edge_indices[4] = {0, 0, 0, 0};
   NeutrinoEnergyEdges = eff_area->GetEdge(edge_indices);
@@ -154,8 +155,8 @@ double Verosimilitud::OscillationProbability(double energy, double zenith,
 
   double osc_prob = de_solver(argument, user_data);
 
-  std::cout << "  ZENITH: " << zenith << "  ENERGY: " << energy
-            << " ANTI: " << anti << "  PROB: " << osc_prob << std::endl;
+  //std::cout << "  ZENITH: " << zenith << "  ENERGY: " << energy
+  //          << " ANTI: " << anti << "  PROB: " << osc_prob << std::endl;
   return osc_prob;
 }
 

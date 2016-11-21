@@ -8,7 +8,7 @@
 
 class ConventionalFlux {
 public:
-  ConventionalFlux();
+  ConventionalFlux(std::string detector_correction_path, std::string flux_path);
   ~ConventionalFlux();
 
   Tensor *GetDetCorr(unsigned int *index);

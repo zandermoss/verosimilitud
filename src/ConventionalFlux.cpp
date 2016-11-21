@@ -1,13 +1,9 @@
 #include "ConventionalFlux.h"
 
-ConventionalFlux::ConventionalFlux() {
-  H5::H5File detectorFile("/Users/marjon/Dropbox "
-                          "(MIT)/work/IceCube/decay/neutrino_decay/"
-                          "verosimilitud/data/conventional_flux.h5",
+ConventionalFlux::ConventionalFlux(std::string detector_correction_path, std::string flux_path) {
+  H5::H5File detectorFile(detector_correction_path.c_str(),
                           H5F_ACC_RDONLY);
-  H5::H5File fluxFile("/Users/marjon/Dropbox "
-                      "(MIT)/work/IceCube/decay/neutrino_decay/verosimilitud/"
-                      "data/Marjon_Int_HondaGaisser.h5",
+  H5::H5File fluxFile(flux_path.c_str(),
                       H5F_ACC_RDONLY);
 
   std::string year_names[] = {"2010", "2011"};

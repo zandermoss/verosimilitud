@@ -1,9 +1,7 @@
 #include "EffectiveArea.h"
 
-EffectiveArea::EffectiveArea() {
-  H5::H5File file("/Users/marjon/Dropbox "
-                  "(MIT)/work/IceCube/decay/neutrino_decay/verosimilitud/data/"
-                  "effective_area.h5",
+EffectiveArea::EffectiveArea(std::string effective_area_path) {
+  H5::H5File file(effective_area_path.c_str(),
                   H5F_ACC_RDONLY);
 
   std::string year_names[] = {"2010", "2011"};
@@ -102,6 +100,7 @@ EffectiveArea::EffectiveArea() {
   file.close();
 }
 
+
 EffectiveArea::~EffectiveArea() {
   for (unsigned int i = 0; i < 2; i++) {
     for (unsigned int j = 0; j < 2; j++) {
@@ -124,6 +123,6 @@ Tensor *EffectiveArea::GetEdge(unsigned int *index) {
   return edges[index[0]][index[1]][index[2]][index[3]];
 }
 
-double EffectiveArea::GetLivetime(unsigned int index) {
+double EffectiveArea::GetLivetime(unsigned int index) const {
   return livetime[index];
 }
