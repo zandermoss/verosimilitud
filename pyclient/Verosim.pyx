@@ -9,7 +9,7 @@ cdef double callback(vector[double] argument, void *f):
 
 cdef class Verosim:
 	cdef cVerosimilitud.Verosimilitud* _c_verosimilitud
-	def __cinit__(self,unsigned int numneu, year, osc_func):
+	def __cinit__(self,unsigned int numneu, year, flux_path,effective_area_path,detector_correction_path, osc_func):
 		if year=="2010":
 			loyear=0
 			hiyear=1
@@ -22,7 +22,7 @@ cdef class Verosim:
 		else:
 			raise ValueError("Bad datayears argument: choices are '2010', '2011', or 'both'")
 
-		self._c_verosimilitud = <cVerosimilitud.Verosimilitud *>new cVerosimilitud.Verosimilitud(numneu,loyear,hiyear,callback,<void*>osc_func)
+		self._c_verosimilitud = <cVerosimilitud.Verosimilitud *>new cVerosimilitud.Verosimilitud(numneu,loyear,hiyear,flux_path,effective_area_path,detector_correction_path,<void*>osc_func,callback)
 		#self._c_verosimilitud = new cVerosimilitud.Verosimilitud()
 		if self._c_verosimilitud is NULL:
 			raise MemoryError()
