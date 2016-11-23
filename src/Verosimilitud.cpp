@@ -211,9 +211,6 @@ double Verosimilitud::SimpsAvg(double coszmin, double coszmax, double emin,
 
 void Verosimilitud::CalculateExpectation() {
   unsigned int dyn_indices[3];
-  unsigned int exp_indices[2];
-  unsigned int area_indices[3];
-  unsigned int edge_indices[4];
   unsigned int which_flux;
   unsigned int exp_dims[2] = {EnergyProxyBins, CosZenithBins};
 
@@ -456,7 +453,6 @@ double Verosimilitud::Chi2(const dlib::matrix<double, 0, 1> &nuisance) const {
   int count = 0;
   double prob;
   double tot_scalar_exp;
-  double raw_scalar_data;
 
   const double norm = nuisance(0);
   const double gamma = nuisance(1);
@@ -486,12 +482,6 @@ double Verosimilitud::Chi2(const dlib::matrix<double, 0, 1> &nuisance) const {
       }
 
       scalar_data = data->Index(indices);
-
-      // raw_scalar_data=data->Index(indices);
-      // scalar_data=1.3*raw_scalar_data*pow((*eprox_centers)[ep]/34592.0,0.2);
-      // // fixme what is 34592 number?
-      // tot_scalar_exp=norm*scalar_exp*pow((*eprox_centers)[ep]/34592.0,gamma);
-      // // fixme what is 34592 number?
 
       tot_scalar_exp = norm * pow(center / E0, -gamma) *
                        (scalar_exp[0] + r_kpi * scalar_exp[2] +
@@ -529,9 +519,6 @@ double Verosimilitud::Chi2(const dlib::matrix<double, 0, 1> &nuisance) const {
       indices[0] = ep;
       indices[1] = z;
       scalar_data = data->Index(indices);
-      // raw_scalar_data=data->Index(indices);
-      // scalar_data=1.3*raw_scalar_data*pow((*eprox_centers)[ep]/34592.0,0.2);
-      // // fixme what is 34592 number?
       double satprob = LogPoissonProbability(scalar_data, scalar_data);
       if (std::isnan(satprob)) {
         satprob = 0;
@@ -560,8 +547,6 @@ Verosimilitud::Chi2Gradient(const dlib::matrix<double, 0, 1> &nuisance) const {
 
   const double E0 = 34592.0;
 
-  double raw_scalar_data;
-
   double center;
 
   double grad0 = 0;
@@ -583,10 +568,6 @@ Verosimilitud::Chi2Gradient(const dlib::matrix<double, 0, 1> &nuisance) const {
       }
 
       scalar_data = data->Index(indices);
-
-      // raw_scalar_data=data->Index(indices);
-      // scalar_data=1.3*raw_scalar_data*pow((*eprox_centers)[ep]/34592.0,0.2);
-      // // fixme what is 34592 number?
 
       tot_scalar_exp = norm * pow(center / E0, -gamma) *
                        ((scalar_exp[0] + r_kpi * scalar_exp[2]) +

@@ -103,7 +103,7 @@ public:
   Verosimilitud(unsigned int numneu, unsigned int loyear,
                 unsigned int hiyear,
                  std::string flux_path, std::string effective_area_path, std::string detector_correction_path,
-                 pyoscfunc de_solv, void *user_data):
+                 pyoscfunc de_solver, void *user_data):
     ioscillation(true),inusquids(false),
     de_solver(de_solver),user_data(user_data),nusquids(NULL)
   {
