@@ -12,6 +12,7 @@
 #include <functional>
 
 #include <dlib/optimization.h>
+#include <nuSQuIDS/nuSQuIDS.h>
 
 //! The log-likelihood/Chi-squared calculation class.
 /*!
@@ -55,7 +56,10 @@ typedef double (*pyoscfunc)(std::vector<double> argument, void *userdata);
 */
 
 class Verosimilitud {
-
+protected:
+  void init(unsigned int numneu, unsigned int loyear,
+            unsigned int hiyear,
+            std::string flux_path, std::string effective_area_path, std::string detector_correction_path);
 public:
   //--------------------------------------------------------//
   //! The Constructor.
@@ -79,16 +83,33 @@ public:
 
   Verosimilitud(unsigned int numneu, unsigned int loyear,
                 unsigned int hiyear,
-                 std::string flux_path, std::string effective_area_path, std::string detector_correction_path)
-      : Verosimilitud(numneu, loyear, hiyear, flux_path, effective_area_path, detector_correction_path,  NULL, NULL)
-  {};
+                 std::string flux_path, std::string effective_area_path, std::string detector_correction_path):
+    ioscillation(false),inusquids(false),
+    de_solver(NULL),user_data(NULL),nusquids(NULL)
+  {
+    init(numneu,loyear,hiyear,flux_path,effective_area_path,detector_correction_path);
+  }
 
   Verosimilitud(unsigned int numneu, unsigned int loyear,
                 unsigned int hiyear,
                  std::string flux_path, std::string effective_area_path, std::string detector_correction_path,
-                 pyoscfunc de_solv, void *user_data);
+                 std::shared_ptr<nusquids::nuSQUIDSAtm<>> nusquids):
+    ioscillation(true),inusquids(true),
+    de_solver(NULL),user_data(NULL),nusquids(nusquids)
+  {
+    init(numneu,loyear,hiyear,flux_path,effective_area_path,detector_correction_path);
+  }
 
-  bool ioscillation = false;
+  Verosimilitud(unsigned int numneu, unsigned int loyear,
+                unsigned int hiyear,
+                 std::string flux_path, std::string effective_area_path, std::string detector_correction_path,
+                 pyoscfunc de_solv, void *user_data):
+    ioscillation(true),inusquids(false),
+    de_solver(de_solver),user_data(user_data),nusquids(NULL)
+  {
+    init(numneu,loyear,hiyear,flux_path,effective_area_path,detector_correction_path);
+  }
+
 
   //--------------------------------------------------------//
   //! The Destructor
@@ -464,6 +485,8 @@ protected:
   unsigned int data_years[2];
 
   int simps_nintervals;
+  bool const ioscillation;
+  bool const inusquids;
 
   std::vector<double> pp;
   std::vector<double> np;
@@ -475,6 +498,7 @@ protected:
 
   pyoscfunc de_solver;
   void *user_data;
+  std::shared_ptr<nusquids::nuSQUIDSAtm<>> nusquids;
 
   //    	marray data: reco energy, reco zenith // histogram
   //   	marray simulation: reco energy, true energy, reco zenith, true zenith //

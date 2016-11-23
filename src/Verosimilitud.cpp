@@ -16,13 +16,11 @@
 #include <dlib/optimization.h>
 #include <dlib/member_function_pointer.h>
 
-Verosimilitud::Verosimilitud(unsigned int numneu, unsigned int loyear,
-                             unsigned int hiyear,
-                             std::string flux_path, std::string effective_area_path, std::string detector_correction_path,
-                             pyoscfunc de_solv,
-                             void *user_data)
-    : ioscillation(true),numneu(numneu) {
-
+void Verosimilitud::init(unsigned int numneu,
+                         unsigned int loyear,
+                         unsigned int hiyear,
+                         std::string flux_path, std::string effective_area_path, std::string detector_correction_path)
+{
   // Which years do we want to include?
   data_years[0] = loyear;
   data_years[1] = hiyear;
@@ -108,7 +106,6 @@ Verosimilitud::Verosimilitud(unsigned int numneu, unsigned int loyear,
       coszenith_edges_array, coszenith_edges_array + coszenith_size);
 
   SetSimpsNIntervals(2);
-  SetDeSolver(de_solver, user_data);
   CalculateExpectation();
 }
 
