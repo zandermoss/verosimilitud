@@ -585,9 +585,11 @@ public:
         param_eval(i) = param[i];
       }
     }
+    /*
     			std::cout << "param: " << nuisance << std:: endl;
     			std::cout << "eparam: " << param_eval << std:: endl;
     			std::cout << "Chi2 " << verosim->Chi2(param_eval) << std::endl;
+    */
     return verosim->Chi2(param_eval);
   }
 };
@@ -623,11 +625,11 @@ public:
         param_eval(i) = param[i];
       }
     }
+    /*
     			std::cout << "param: " << nuisance << std:: endl;
     			std::cout << "eparam: " << param_eval << std:: endl;
-    			std::cout << "Chi2G " << verosim->Chi2Gradient(param_eval) <<
-    std::endl;
-
+    			std::cout << "Chi2G " << verosim->Chi2Gradient(param_eval) << std::endl;
+    */
     grad_eval = verosim->Chi2Gradient(param_eval);
     unsigned jj = 0;
     for (unsigned int i = 0; i < param.size(); i++) {
