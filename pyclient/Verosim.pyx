@@ -22,7 +22,8 @@ cdef class Verosim:
 		else:
 			raise ValueError("Bad datayears argument: choices are '2010', '2011', or 'both'")
 
-		self._c_verosimilitud = <cVerosimilitud.Verosimilitud *>new cVerosimilitud.Verosimilitud(numneu,loyear,hiyear,flux_path,effective_area_path,detector_correction_path,<void*>osc_func,callback)
+		self._c_verosimilitud = <cVerosimilitud.Verosimilitud *>new cVerosimilitud.Verosimilitud(numneu,loyear,hiyear,flux_path,effective_area_path,detector_correction_path)
+		#self._c_verosimilitud = <cVerosimilitud.Verosimilitud *>new cVerosimilitud.Verosimilitud(numneu,loyear,hiyear,flux_path,effective_area_path,detector_correction_path,<void*>osc_func,callback)
 		#self._c_verosimilitud = new cVerosimilitud.Verosimilitud()
 		if self._c_verosimilitud is NULL:
 			raise MemoryError()

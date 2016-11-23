@@ -21,6 +21,9 @@ void Verosimilitud::init(unsigned int numneu,
                          unsigned int hiyear,
                          std::string flux_path, std::string effective_area_path, std::string detector_correction_path)
 {
+  // initialize cache
+  gradient_cache = dlib::matrix<double, 0, 1>(4);
+
   // Which years do we want to include?
   data_years[0] = loyear;
   data_years[1] = hiyear;
@@ -404,13 +407,6 @@ std::vector<double> Verosimilitud::MinLLH(std::vector<double> param,
     }
   }
 
-  /* all ok
-  std::cout << "Input" << std::endl;
-  std::cout << nuisance << std::endl;
-  std::cout << lo_bounds << std::endl;
-  std::cout << hi_bounds << std::endl;
-  */
-
   // 	dlib::find_min_box_constrained(dlib::bfgs_search_strategy(),
   // 							   dlib::objective_delta_stop_strategy(1e-7),
   // 							   Chi2_caller(this,param,param_to_minimize),
@@ -420,7 +416,8 @@ std::vector<double> Verosimilitud::MinLLH(std::vector<double> param,
   // 							   hi_bounds);
 
   dlib::find_min_box_constrained(
-      dlib::lbfgs_search_strategy(10), dlib::gradient_norm_stop_strategy(1e-1),
+      dlib::bfgs_search_strategy(), dlib::gradient_norm_stop_strategy(1e-6),
+      //dlib::lbfgs_search_strategy(10), dlib::gradient_norm_stop_strategy(1e-1),
       Chi2_caller(this, param, param_to_minimize),
       Chi2grad_caller(this, param, param_to_minimize), nuisance, lo_bounds,
       hi_bounds);
@@ -597,14 +594,12 @@ Verosimilitud::Chi2Gradient(const dlib::matrix<double, 0, 1> &nuisance) const {
   grad2 *= 2;
   grad3 *= 2;
 
-  dlib::matrix<double, 0, 1> gradient(4);
+  gradient_cache(0) = grad0;
+  gradient_cache(1) = grad1;
+  gradient_cache(2) = grad2;
+  gradient_cache(3) = grad3;
 
-  gradient(0) = grad0;
-  gradient(1) = grad1;
-  gradient(2) = grad2;
-  gradient(3) = grad3;
-
-  return gradient;
+  return gradient_cache;
 }
 
 double Verosimilitud::LLH(std::vector<double> param) {

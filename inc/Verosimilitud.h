@@ -554,9 +554,9 @@ protected:
   double r_nubarnu_mean = 1;
   double r_nubarnu_sigma = 0.025;
 
-  // 	   Set_data()
-
-  //	   Set_simulation()
+private:
+  // caches for memory efficiency
+  mutable dlib::matrix<double, 0, 1> gradient_cache;
 };
 
 class Chi2_caller {
@@ -565,12 +565,14 @@ private:
   Verosimilitud *verosim;
   std::vector<double> param;
   std::vector<bool> param_to_minimize;
-
+  mutable dlib::matrix<double,0,1> param_eval;
 public:
   // constructor
   Chi2_caller(Verosimilitud *verosim, std::vector<double> param,
-              std::vector<bool> param_to_minimize)
-      : verosim(verosim), param(param), param_to_minimize(param_to_minimize){};
+              std::vector<bool> param_to_minimize):
+    verosim(verosim), param(param), param_to_minimize(param_to_minimize),
+    param_eval(dlib::matrix<double,0,1>(param.size()))
+  {};
   // operator overloading
   double operator()(const dlib::matrix<double, 0, 1> &nuisance) const {
     dlib::matrix<double, 0, 1> param_eval(param.size());
@@ -583,12 +585,9 @@ public:
         param_eval(i) = param[i];
       }
     }
-    //			/*
-    //			std::cout << "param: " << nuisance << std:: endl;
-    //			std::cout << "eparam: " << param_eval << std:: endl;
-    //			std::cout << "Chi2 " << verosim->Chi2(param_eval) <<
-    //std::endl;
-    //			*/
+    			std::cout << "param: " << nuisance << std:: endl;
+    			std::cout << "eparam: " << param_eval << std:: endl;
+    			std::cout << "Chi2 " << verosim->Chi2(param_eval) << std::endl;
     return verosim->Chi2(param_eval);
   }
 };
@@ -599,16 +598,22 @@ private:
   Verosimilitud *verosim;
   std::vector<double> param;
   std::vector<bool> param_to_minimize;
-
+  mutable dlib::matrix<double,0,1> param_eval;
+  mutable dlib::matrix<double,0,1> grad_eval;
+  mutable dlib::matrix<double,0,1> grad_eval_return;
 public:
   // constructor
   Chi2grad_caller(Verosimilitud *verosim, std::vector<double> param,
-                  std::vector<bool> param_to_minimize)
-      : verosim(verosim), param(param), param_to_minimize(param_to_minimize){};
+                  std::vector<bool> param_to_minimize):
+    verosim(verosim), param(param), param_to_minimize(param_to_minimize),
+    param_eval(dlib::matrix<double,0,1>(param.size())),
+    grad_eval(dlib::matrix<double,0,1>(param.size())),
+    grad_eval_return(dlib::matrix<double,0,1>(std::count(param_to_minimize.begin(), param_to_minimize.end(), true)))
+  {};
   // operator overloading
   dlib::matrix<double, 0, 1>
   operator()(const dlib::matrix<double, 0, 1> &nuisance) const {
-    dlib::matrix<double, 0, 1> param_eval(param.size());
+    //dlib::matrix<double, 0, 1> param_eval;
     unsigned int j = 0;
     for (unsigned int i = 0; i < param.size(); i++) {
       if (param_to_minimize[i]) {
@@ -618,26 +623,21 @@ public:
         param_eval(i) = param[i];
       }
     }
-    //			/*
-    //			std::cout << "param: " << nuisance << std:: endl;
-    //			std::cout << "eparam: " << param_eval << std:: endl;
-    //			std::cout << "Chi2G " << verosim->Chi2Gradient(param_eval) <<
-    //std::endl;
-    //			*/
+    			std::cout << "param: " << nuisance << std:: endl;
+    			std::cout << "eparam: " << param_eval << std:: endl;
+    			std::cout << "Chi2G " << verosim->Chi2Gradient(param_eval) <<
+    std::endl;
 
-    // this two do not have the same length!!
-    dlib::matrix<double, 0, 1> eval_grad = verosim->Chi2Gradient(param_eval);
-    dlib::matrix<double, 0, 1> eval_grad_return(nuisance.size());
-
+    grad_eval = verosim->Chi2Gradient(param_eval);
     unsigned jj = 0;
     for (unsigned int i = 0; i < param.size(); i++) {
       if (param_to_minimize[i]) {
-        eval_grad_return(jj) = eval_grad(i);
+        grad_eval_return(jj) = grad_eval(i);
         jj++;
       }
     }
 
-    return eval_grad_return;
+    return grad_eval_return;
   }
 };
 
