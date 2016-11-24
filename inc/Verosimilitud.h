@@ -59,7 +59,7 @@ class Verosimilitud {
 protected:
   void init(unsigned int numneu, unsigned int loyear,
             unsigned int hiyear,
-            std::string flux_path, std::string effective_area_path, std::string detector_correction_path);
+            std::string data_path,std::string flux_path, std::string effective_area_path, std::string detector_correction_path);
 public:
   //--------------------------------------------------------//
   //! The Constructor.
@@ -83,31 +83,31 @@ public:
 
   Verosimilitud(unsigned int numneu, unsigned int loyear,
                 unsigned int hiyear,
-                 std::string flux_path, std::string effective_area_path, std::string detector_correction_path):
+                 std::string data_path,std::string flux_path, std::string effective_area_path, std::string detector_correction_path):
     ioscillation(false),inusquids(false),
     de_solver(NULL),user_data(NULL),nusquids(NULL)
   {
-    init(numneu,loyear,hiyear,flux_path,effective_area_path,detector_correction_path);
+    init(numneu,loyear,hiyear,data_path,flux_path,effective_area_path,detector_correction_path);
   }
 
   Verosimilitud(unsigned int numneu, unsigned int loyear,
                 unsigned int hiyear,
-                 std::string flux_path, std::string effective_area_path, std::string detector_correction_path,
+                 std::string data_path,std::string flux_path, std::string effective_area_path, std::string detector_correction_path,
                  std::shared_ptr<nusquids::nuSQUIDSAtm<>> nusquids):
     ioscillation(true),inusquids(true),
     de_solver(NULL),user_data(NULL),nusquids(nusquids)
   {
-    init(numneu,loyear,hiyear,flux_path,effective_area_path,detector_correction_path);
+    init(numneu,loyear,hiyear,data_path,flux_path,effective_area_path,detector_correction_path);
   }
 
   Verosimilitud(unsigned int numneu, unsigned int loyear,
                 unsigned int hiyear,
-                 std::string flux_path, std::string effective_area_path, std::string detector_correction_path,
+                 std::string data_path,std::string flux_path, std::string effective_area_path, std::string detector_correction_path,
                  pyoscfunc de_solver, void *user_data):
     ioscillation(true),inusquids(false),
     de_solver(de_solver),user_data(user_data),nusquids(NULL)
   {
-    init(numneu,loyear,hiyear,flux_path,effective_area_path,detector_correction_path);
+    init(numneu,loyear,hiyear,data_path,flux_path,effective_area_path,detector_correction_path);
   }
 
 
@@ -545,14 +545,14 @@ protected:
 
   // Nuisance parameters:
 
-  double norm_mean = 1;
-  double norm_sigma = 0.4;
-  double gamma_mean = 0;
-  double gamma_sigma = 0.05;
-  double r_kpi_mean = 1;
-  double r_kpi_sigma = 0.1;
-  double r_nubarnu_mean = 1;
-  double r_nubarnu_sigma = 0.025;
+  const double norm_mean = 1;
+  const double norm_sigma = 0.4;
+  const double gamma_mean = 0;
+  const double gamma_sigma = 0.05;
+  const double r_kpi_mean = 1;
+  const double r_kpi_sigma = 0.1;
+  const double r_nubarnu_mean = 1;
+  const double r_nubarnu_sigma = 0.025;
 
 private:
   // caches for memory efficiency

@@ -17,7 +17,11 @@ ICData::ICData(Tensor *t_eprox_edges, Tensor *t_cosz_edges) {
   }
 }
 
-void ICData::OpenCSV(std::string filename) { datafile.open(filename.c_str()); }
+void ICData::OpenCSV(std::string filename) {
+  datafile.open(filename.c_str());
+  if(!datafile)
+    throw std::runtime_error(filename + " not found.");
+}
 
 void ICData::ReadCSV(void) {
   std::string value;

@@ -19,7 +19,7 @@
 void Verosimilitud::init(unsigned int numneu,
                          unsigned int loyear,
                          unsigned int hiyear,
-                         std::string flux_path, std::string effective_area_path, std::string detector_correction_path)
+                         std::string data_path,std::string flux_path, std::string effective_area_path, std::string detector_correction_path)
 {
   // initialize cache
   gradient_cache = dlib::matrix<double, 0, 1>(4);
@@ -41,7 +41,7 @@ void Verosimilitud::init(unsigned int numneu,
   EnergyProxyEdges = eff_area->GetEdge(edge_indices);
 
   // Bin data from 2010, 2011, or both!
-  std::string fnames[2] = {"./2010.dat", "./2011.dat"};
+  std::string fnames[2] = {data_path+"/2010.dat", data_path+"/2011.dat"};
 
   unsigned int datadims[2];
   datadims[0] = EnergyProxyBins;
@@ -421,8 +421,8 @@ std::vector<double> Verosimilitud::MinLLH(std::vector<double> param,
   // 							   hi_bounds);
 
   dlib::find_min_box_constrained(
-      dlib::bfgs_search_strategy(), dlib::gradient_norm_stop_strategy(1e-6),
-      //dlib::lbfgs_search_strategy(10), dlib::gradient_norm_stop_strategy(1e-1),
+      //dlib::bfgs_search_strategy(), dlib::gradient_norm_stop_strategy(1e-6),
+      dlib::lbfgs_search_strategy(10), dlib::gradient_norm_stop_strategy(1e-1),
       Chi2_caller(this, param, param_to_minimize),
       Chi2grad_caller(this, param, param_to_minimize), nuisance, lo_bounds,
       hi_bounds);
@@ -589,22 +589,17 @@ Verosimilitud::Chi2Gradient(const dlib::matrix<double, 0, 1> &nuisance) const {
     }
   }
 
-  grad0 += (norm - norm_mean) / pow(norm_sigma, 2);
-  grad1 += (gamma - gamma_mean) / pow(gamma_sigma, 2);
-  grad2 += (r_kpi - r_kpi_mean) / pow(r_kpi_sigma, 2);
-  grad3 += (r_nubarnu - r_nubarnu_mean) / pow(r_nubarnu_sigma, 2);
-
-  grad0 *= 2;
-  grad1 *= 2;
-  grad2 *= 2;
-  grad3 *= 2;
+  grad0 += 2.*(norm - norm_mean) / pow(norm_sigma, 2);
+  grad1 += 2.*(gamma - gamma_mean) / pow(gamma_sigma, 2);
+  grad2 += 2.*(r_kpi - r_kpi_mean) / pow(r_kpi_sigma, 2);
+  grad3 += 2.*(r_nubarnu - r_nubarnu_mean) / pow(r_nubarnu_sigma, 2);
 
   gradient_cache(0) = grad0;
   gradient_cache(1) = grad1;
   gradient_cache(2) = grad2;
   gradient_cache(3) = grad3;
 
-  return gradient_cache;
+  return 2.*gradient_cache;
 }
 
 double Verosimilitud::LLH(std::vector<double> param) {
