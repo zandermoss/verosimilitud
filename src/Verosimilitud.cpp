@@ -604,7 +604,7 @@ Verosimilitud::Chi2Gradient(const dlib::matrix<double, 0, 1> &nuisance) const {
   gradient_cache(2) = grad2;
   gradient_cache(3) = grad3;
 
-  return -gradient_cache;
+  return gradient_cache;
 }
 
 double Verosimilitud::LLH(std::vector<double> param) {
