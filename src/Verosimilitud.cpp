@@ -148,12 +148,17 @@ double Verosimilitud::OscillationProbability(double energy, double zenith,
   // Here we call nusheep. Although, would it be better to precalculate an
   // array?
   // I think for now I will implement direct calls.
-  std::vector<double> argument;
-  argument.push_back(energy);
-  argument.push_back(zenith);
-  argument.push_back(anti);
 
-  double osc_prob = de_solver(argument, user_data);
+  double osc_prob;
+  if(inusquids){
+    osc_prob = 1.; // some nusquids call
+  } else {
+    std::vector<double> argument;
+    argument.push_back(energy);
+    argument.push_back(zenith);
+    argument.push_back(anti);
+    osc_prob = de_solver(argument, user_data);
+  }
 
   //std::cout << "  ZENITH: " << zenith << "  ENERGY: " << energy
   //          << " ANTI: " << anti << "  PROB: " << osc_prob << std::endl;
@@ -599,7 +604,7 @@ Verosimilitud::Chi2Gradient(const dlib::matrix<double, 0, 1> &nuisance) const {
   gradient_cache(2) = grad2;
   gradient_cache(3) = grad3;
 
-  return gradient_cache;
+  return -gradient_cache;
 }
 
 double Verosimilitud::LLH(std::vector<double> param) {
