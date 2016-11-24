@@ -366,6 +366,11 @@ this function, see the documentation for "::"GetFluxVec
 
   double Chi2(const dlib::matrix<double, 0, 1> &nuisance) const;
 
+  double operator()(const dlib::matrix<double, 0, 1> &nuisance) const {
+    return Chi2(nuisance);
+  }
+
+
   //--------------------------------------------------------//
   //! Calculates the gradient of the Chi2 returned by "::"Chi2 in the space of
   //! nuisance parameters.
@@ -586,9 +591,9 @@ public:
       }
     }
     /*
-    			std::cout << "param: " << nuisance << std:: endl;
-    			std::cout << "eparam: " << param_eval << std:: endl;
-    			std::cout << "Chi2 " << verosim->Chi2(param_eval) << std::endl;
+    std::cout << "param: " << nuisance << std:: endl;
+    std::cout << "eparam: " << param_eval << std:: endl;
+    std::cout << "Chi2 " << verosim->Chi2(param_eval) << std::endl;
     */
     return verosim->Chi2(param_eval);
   }
@@ -625,19 +630,21 @@ public:
         param_eval(i) = param[i];
       }
     }
-    /*
-    			std::cout << "param: " << nuisance << std:: endl;
-    			std::cout << "eparam: " << param_eval << std:: endl;
-    			std::cout << "Chi2G " << verosim->Chi2Gradient(param_eval) << std::endl;
-    */
     grad_eval = verosim->Chi2Gradient(param_eval);
-    unsigned jj = 0;
+    unsigned int jj = 0;
     for (unsigned int i = 0; i < param.size(); i++) {
       if (param_to_minimize[i]) {
         grad_eval_return(jj) = grad_eval(i);
         jj++;
       }
     }
+
+    /*
+    std::cout << "param: " << nuisance << std:: endl;
+    std::cout << "eparam: " << param_eval << std:: endl;
+    std::cout << "Chi2G " << grad_eval << std::endl;
+    std::cout << "Chi2GR " << grad_eval_return << std::endl;
+    */
 
     return grad_eval_return;
   }

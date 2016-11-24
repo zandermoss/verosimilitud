@@ -412,20 +412,22 @@ std::vector<double> Verosimilitud::MinLLH(std::vector<double> param,
     }
   }
 
-  // 	dlib::find_min_box_constrained(dlib::bfgs_search_strategy(),
-  // 							   dlib::objective_delta_stop_strategy(1e-7),
-  // 							   Chi2_caller(this,param,param_to_minimize),
-  // 							   Chi2grad_caller(this,param,param_to_minimize),
-  // 							   nuisance,
-  // 							   lo_bounds,
-  // 							   hi_bounds);
+  dlib::find_min_box_constrained(dlib::bfgs_search_strategy(),
+                 dlib::objective_delta_stop_strategy(1e-7),
+                 Chi2_caller(this,param,param_to_minimize),
+                 Chi2grad_caller(this,param,param_to_minimize),
+                 nuisance,
+                 lo_bounds,
+                 hi_bounds);
 
+  /*
   dlib::find_min_box_constrained(
-      //dlib::bfgs_search_strategy(), dlib::gradient_norm_stop_strategy(1e-6),
-      dlib::lbfgs_search_strategy(10), dlib::gradient_norm_stop_strategy(1e-1),
+      dlib::bfgs_search_strategy(), dlib::gradient_norm_stop_strategy(1e-6),
+      //dlib::lbfgs_search_strategy(10), dlib::gradient_norm_stop_strategy(1e-1),
       Chi2_caller(this, param, param_to_minimize),
       Chi2grad_caller(this, param, param_to_minimize), nuisance, lo_bounds,
       hi_bounds);
+  */
 
   std::vector<double> ret(param.size() + 1, 0);
 
