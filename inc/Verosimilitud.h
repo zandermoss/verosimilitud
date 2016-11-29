@@ -97,19 +97,34 @@ public:
     ioscillation(true),inusquids(true),
     de_solver(NULL),user_data(NULL),nusquids(nusquids)
   {
+    nuSQuIDSFillOscProb();
     init(numneu,loyear,hiyear,data_path,flux_path,effective_area_path,detector_correction_path);
   }
 
   Verosimilitud(unsigned int numneu, unsigned int loyear,
                 unsigned int hiyear,
-                 std::string data_path,std::string flux_path, std::string effective_area_path, std::string detector_correction_path,
-                 pyoscfunc de_solver, void *user_data):
+                std::string data_path,std::string flux_path, std::string effective_area_path, std::string detector_correction_path,
+                std::vector<double> nu_osc_prob_array,std::vector<double> nubar_osc_prob_array):
+    ioscillation(true),inusquids(false),
+    de_solver(NULL),user_data(NULL),nusquids(NULL),nu_osc_prob_array(nu_osc_prob_array),nubar_osc_prob_array(nubar_osc_prob_array)
+  {
+    init(numneu,loyear,hiyear,data_path,flux_path,effective_area_path,detector_correction_path);
+  }
+
+  /*
+  Verosimilitud(unsigned int numneu, unsigned int loyear,
+                unsigned int hiyear,
+                std::string data_path,std::string flux_path, std::string effective_area_path, std::string detector_correction_path,
+                pyoscfunc de_solver, void *user_data):
     ioscillation(true),inusquids(false),
     de_solver(de_solver),user_data(user_data),nusquids(NULL)
   {
     init(numneu,loyear,hiyear,data_path,flux_path,effective_area_path,detector_correction_path);
   }
+  */
 
+  // work on me please!
+  void nuSQuIDSFillOscProb() {};
 
   //--------------------------------------------------------//
   //! The Destructor
@@ -496,6 +511,7 @@ protected:
   std::vector<double> pp;
   std::vector<double> np;
 
+
   unsigned int numneu;
   std::vector<std::vector<double>> decay_lambda;
   std::vector<std::vector<double>> pmns_lambda;
@@ -505,6 +521,8 @@ protected:
   void *user_data;
   std::shared_ptr<nusquids::nuSQUIDSAtm<>> nusquids;
 
+  std::vector<double> nu_osc_prob_array;
+  std::vector<double> nubar_osc_prob_array;
   //    	marray data: reco energy, reco zenith // histogram
   //   	marray simulation: reco energy, true energy, reco zenith, true zenith //
   //   histogram

@@ -149,19 +149,14 @@ double Verosimilitud::OscillationProbability(double energy, double zenith,
   // array?
   // I think for now I will implement direct calls.
 
+  auto ie = std::lower_bound((*energy_edges).begin(),(*energy_edges).end(),energy);
+  auto cz = std::lower_bound((*coszenith_edges).begin(),(*coszenith_edges).end(),cos(zenith));
   double osc_prob;
-  if(inusquids){
-    osc_prob = 1.; // some nusquids call
+  if(anti < 0.5){
+    return nu_osc_prob_array[(*energy_edges).size()*(*cz)+(*ie)];
   } else {
-    std::vector<double> argument;
-    argument.push_back(energy);
-    argument.push_back(zenith);
-    argument.push_back(anti);
-    osc_prob = de_solver(argument, user_data);
+    return nubar_osc_prob_array[(*energy_edges).size()*(*cz)+(*ie)];
   }
-
-  //std::cout << "  ZENITH: " << zenith << "  ENERGY: " << energy
-  //          << " ANTI: " << anti << "  PROB: " << osc_prob << std::endl;
   return osc_prob;
 }
 

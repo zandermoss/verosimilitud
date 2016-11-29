@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <stdexcept>
 #include <fstream>
 #include "Tensor.h"
 
