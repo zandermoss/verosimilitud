@@ -115,6 +115,7 @@ void Verosimilitud::init(unsigned int numneu,
   coszenith_edges = new std::vector<double>(
       coszenith_edges_array, coszenith_edges_array + coszenith_size);
 
+
   SetSimpsNIntervals(2);
   CalculateExpectation();
 }
@@ -158,6 +159,7 @@ double Verosimilitud::OscillationProbability(size_t energy_index, size_t zenith_
   }
 }
 
+/*
 double Verosimilitud::OscillationProbability(double energy, double zenith,
                                              double anti) const {
   // Here we call nusheep. Although, would it be better to precalculate an
@@ -172,6 +174,7 @@ double Verosimilitud::OscillationProbability(double energy, double zenith,
     return nubar_osc_prob_array[(*energy_edges).size()*(*cz)+(*ie)];
   }
 }
+*/
 
 void Verosimilitud::SetDeSolver(pyoscfunc my_de_solver, void *my_user_data) {
   de_solver = my_de_solver;
@@ -213,6 +216,7 @@ double Verosimilitud::SimpsAvg(double coszmin, double coszmax, double emin,
       integral += 2 * OscillationProbability(emin + 2 * (double)i * width,
                                              acos(coszval), anti);
     }
+  	std::cout << "SimpsAvg 2" << std::endl;
     for (int i = 1; i < (nintervals_e / 2 + 1); i++) {
       integral += 4 * OscillationProbability(emin + (2 * (double)i - 1) * width,
                                              acos(coszval), anti);
@@ -222,6 +226,7 @@ double Verosimilitud::SimpsAvg(double coszmin, double coszmax, double emin,
     mean += integral / (2 * (emax - emin));
     integral = 0;
   }
+  std::cout << "SimpsAvg 3" << std::endl;
   return mean;
 }
 
