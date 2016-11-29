@@ -143,21 +143,27 @@ void Verosimilitud::SetEproxCuts(std::vector<double> cuts) {
   }
 }
 
+double Verosimilitud::OscillationProbability(size_t energy_index, size_t zenith_index, size_t anti) const {
+  if(anti == 0){
+    return nu_osc_prob_array[(*energy_edges).size()*(zenith_index)+(energy_index)];
+  } else {
+    return nubar_osc_prob_array[(*energy_edges).size()*(zenith_index)+(energy_index)];
+  }
+}
+
 double Verosimilitud::OscillationProbability(double energy, double zenith,
-                                             double anti) {
+                                             double anti) const {
   // Here we call nusheep. Although, would it be better to precalculate an
   // array?
   // I think for now I will implement direct calls.
 
   auto ie = std::lower_bound((*energy_edges).begin(),(*energy_edges).end(),energy);
   auto cz = std::lower_bound((*coszenith_edges).begin(),(*coszenith_edges).end(),cos(zenith));
-  double osc_prob;
   if(anti < 0.5){
     return nu_osc_prob_array[(*energy_edges).size()*(*cz)+(*ie)];
   } else {
     return nubar_osc_prob_array[(*energy_edges).size()*(*cz)+(*ie)];
   }
-  return osc_prob;
 }
 
 void Verosimilitud::SetDeSolver(pyoscfunc my_de_solver, void *my_user_data) {
