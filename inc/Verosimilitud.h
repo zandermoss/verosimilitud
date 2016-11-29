@@ -256,7 +256,7 @@ public:
           \return distribution of flux over true energy.
   */
 
-  std::vector<double> GetFluxVec(void);
+  //std::vector<double> GetFluxVec(void);
 
   //--------------------------------------------------------//
   //! Returns the linearized effective area tensor as a vector.
