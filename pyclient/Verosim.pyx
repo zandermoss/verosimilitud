@@ -47,8 +47,8 @@ cdef class Verosim:
 #		return self._c_verosimilitud.GetExpectationVec()
 	def GetAreaVec(self):
 		return self._c_verosimilitud.GetAreaVec()
-	def GetFluxVec(self):
-		return self._c_verosimilitud.GetFluxVec()
+#	def GetFluxVec(self):
+#		return self._c_verosimilitud.GetFluxVec()
 
 	def SetEproxCuts(self,vector[double] cuts):
 		self._c_verosimilitud.SetEproxCuts(cuts)
