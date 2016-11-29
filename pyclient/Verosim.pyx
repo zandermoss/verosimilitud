@@ -3,13 +3,9 @@ from libcpp.vector cimport vector
 import numpy as np
 
 
-
-cdef double callback(vector[double] argument, void *f):
-	return (<object>f)(<object>argument)
-
 cdef class Verosim:
 	cdef cVerosimilitud.Verosimilitud* _c_verosimilitud
-	def __cinit__(self,unsigned int numneu, year, flux_path,effective_area_path,detector_correction_path, osc_func):
+	def __cinit__(self,unsigned int numneu, year, flux_path,effective_area_path,detector_correction_path, nu_vec, antinu_vec):
 		if year=="2010":
 			loyear=0
 			hiyear=1
@@ -22,9 +18,7 @@ cdef class Verosim:
 		else:
 			raise ValueError("Bad datayears argument: choices are '2010', '2011', or 'both'")
 
-		self._c_verosimilitud = <cVerosimilitud.Verosimilitud *>new cVerosimilitud.Verosimilitud(numneu,loyear,hiyear,flux_path,effective_area_path,detector_correction_path)
-		#self._c_verosimilitud = <cVerosimilitud.Verosimilitud *>new cVerosimilitud.Verosimilitud(numneu,loyear,hiyear,flux_path,effective_area_path,detector_correction_path,<void*>osc_func,callback)
-		#self._c_verosimilitud = new cVerosimilitud.Verosimilitud()
+		self._c_verosimilitud = <cVerosimilitud.Verosimilitud *>new cVerosimilitud.Verosimilitud(numneu,loyear,hiyear,flux_path,effective_area_path,detector_correction_path,nu_vec, antinu_vec)
 		if self._c_verosimilitud is NULL:
 			raise MemoryError()
 
@@ -74,15 +68,6 @@ cdef class Verosim:
 		return self._c_verosimilitud.SimpsAvg(coszmin, coszmax, emin, emax, anti, nintervals)
 
 
-	"""
-	def SetDeSolver(self,object obj):
-		self._c_verosimilitud.SetDeSolver(obj)
-		return
-	"""	
-
-	def SetDeSolver(self,f):
-		self._c_verosimilitud.SetDeSolver(callback,<void*>f)
-		return
 
 	def OscillationProbability(self,energy,zenith, anti):
 		self._c_verosimilitud.OscillationProbability(energy,zenith,anti)

@@ -2,11 +2,9 @@ from libcpp.vector cimport vector
 
 cdef extern from "Verosimilitud.h":
 
-	ctypedef double (*pyoscfunc)(vector[double] argument, void* user_data)
-
 	cdef cppclass Verosimilitud:
 		#Verosimilitud(unsigned int numneu,unsigned int loyear, unsigned int hiyear, str flux_path, str effective_area_path, str detector_correction_path, osc_func, callback)
-		Verosimilitud(unsigned int numneu,unsigned int loyear, unsigned int hiyear, str flux_path, str effective_area_path, str detector_correction_path)
+		Verosimilitud(unsigned int numneu,unsigned int loyear, unsigned int hiyear, str flux_path, str effective_area_path, str detector_correction_path, vector[double] nu_vec, vector[double] antinu_vec)
 
 		void SetEproxCuts(vector[double] cuts)
 		void CalculateExpectation()
@@ -27,6 +25,3 @@ cdef extern from "Verosimilitud.h":
 		vector[unsigned int] GetExpDims()
 		vector[unsigned int] GetDataDims()
 
-		double OscillationProbability(double energy,double zenith, double anti)
-		void SetDeSolver(pyoscfunc de_solver, void* user_data)
-		
