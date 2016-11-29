@@ -5,23 +5,15 @@ import numpy as np
 
 cdef class Verosim:
 	cdef cVerosimilitud.Verosimilitud* _c_verosimilitud
-	def __cinit__(self,unsigned int numneu, year, flux_path,effective_area_path,detector_correction_path, nu_vec, antinu_vec):
-		if year=="2010":
-			loyear=0
-			hiyear=1
-		elif year=="2011":
-			loyear=1
-			hiyear=2
-		elif year=="both":
-			loyear=0
-			hiyear=2
-		else:
-			raise ValueError("Bad datayears argument: choices are '2010', '2011', or 'both'")
+	def __cinit__(self,unsigned int numneu, loyear, hiyear, data_path, flux_path,effective_area_path,detector_correction_path, nu_vec, antinu_vec):
 
-		self._c_verosimilitud = <cVerosimilitud.Verosimilitud *>new cVerosimilitud.Verosimilitud(numneu,loyear,hiyear,flux_path,effective_area_path,detector_correction_path,nu_vec, antinu_vec)
+		self._c_verosimilitud = <cVerosimilitud.Verosimilitud *>new cVerosimilitud.Verosimilitud(numneu,loyear,hiyear,data_path,flux_path,effective_area_path,detector_correction_path,nu_vec, antinu_vec)
 		if self._c_verosimilitud is NULL:
 			raise MemoryError()
 
+
+	def MinLLH(self, param, low_bound, high_bound, param_to_minimize):
+		return self._c_verosimilitud.MinLLH(param, low_bound, high_bound, param_to_minimize)	
 
 	def GetExpDims(self):
 		return self._c_verosimilitud.GetExpDims()
@@ -67,11 +59,6 @@ cdef class Verosim:
 	def SimpsAvg(self,coszmin, coszmax, emin, emax, anti, nintervals):
 		return self._c_verosimilitud.SimpsAvg(coszmin, coszmax, emin, emax, anti, nintervals)
 
-
-
-	def OscillationProbability(self,energy,zenith, anti):
-		self._c_verosimilitud.OscillationProbability(energy,zenith,anti)
-		return
 
 		
 	def __dealloc__(self):

@@ -19,8 +19,15 @@
 void Verosimilitud::init(unsigned int numneu,
                          unsigned int loyear,
                          unsigned int hiyear,
-                         std::string data_path,std::string flux_path, std::string effective_area_path, std::string detector_correction_path)
+                         char* char_data_path, char* char_flux_path, char* char_effective_area_path, char* char_detector_correction_path)
 {
+  // Convert char to string
+  std::string data_path(char_data_path);
+  std::string flux_path(char_flux_path);
+  std::string effective_area_path(char_effective_area_path);
+  std::string detector_correction_path(char_detector_correction_path);
+
+
   // initialize cache
   gradient_cache = dlib::matrix<double, 0, 1>(4);
 

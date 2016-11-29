@@ -59,7 +59,7 @@ class Verosimilitud {
 protected:
   void init(unsigned int numneu, unsigned int loyear,
             unsigned int hiyear,
-            std::string data_path,std::string flux_path, std::string effective_area_path, std::string detector_correction_path);
+            char* data_path, char* flux_path, char* effective_area_path, char* detector_correction_path);
 public:
   //--------------------------------------------------------//
   //! The Constructor.
@@ -83,7 +83,7 @@ public:
 
   Verosimilitud(unsigned int numneu, unsigned int loyear,
                 unsigned int hiyear,
-                 std::string data_path,std::string flux_path, std::string effective_area_path, std::string detector_correction_path):
+                 char* data_path,char* flux_path, char* effective_area_path, char* detector_correction_path):
     ioscillation(false),inusquids(false),
     de_solver(NULL),user_data(NULL),nusquids(NULL)
   {
@@ -92,7 +92,7 @@ public:
 
   Verosimilitud(unsigned int numneu, unsigned int loyear,
                 unsigned int hiyear,
-                 std::string data_path,std::string flux_path, std::string effective_area_path, std::string detector_correction_path,
+                 char* data_path,char* flux_path, char* effective_area_path, char* detector_correction_path,
                  std::shared_ptr<nusquids::nuSQUIDSAtm<>> nusquids):
     ioscillation(true),inusquids(true),
     de_solver(NULL),user_data(NULL),nusquids(nusquids)
@@ -103,7 +103,7 @@ public:
 
   Verosimilitud(unsigned int numneu, unsigned int loyear,
                 unsigned int hiyear,
-                std::string data_path,std::string flux_path, std::string effective_area_path, std::string detector_correction_path,
+                char* data_path, char* flux_path, char* effective_area_path, char* detector_correction_path,
                 std::vector<double> nu_osc_prob_array,std::vector<double> nubar_osc_prob_array):
     ioscillation(true),inusquids(false),
     de_solver(NULL),user_data(NULL),nusquids(NULL),nu_osc_prob_array(nu_osc_prob_array),nubar_osc_prob_array(nubar_osc_prob_array)
