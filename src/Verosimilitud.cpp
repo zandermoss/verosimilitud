@@ -1,7 +1,7 @@
 #include "Verosimilitud.h"
 #include <iostream>
 #include <stdexcept>
-#include <Python.h>
+//#include <Python.h>
 #include "Flux.h"
 #include "Tensor.h"
 #include "H5Cpp.h"
@@ -37,8 +37,8 @@ void Verosimilitud::init(unsigned int numneu,
 
   simps_nintervals = 2;
 
-  eff_area = new EffectiveArea(effective_area_path);
   conv_flux = new ConventionalFlux(detector_correction_path,flux_path);
+  eff_area = new EffectiveArea(effective_area_path);
 
   unsigned int edge_indices[4] = {0, 0, 0, 0};
   NeutrinoEnergyEdges = eff_area->GetEdge(edge_indices);

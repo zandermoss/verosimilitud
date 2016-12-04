@@ -17,16 +17,19 @@ CFLAGS = -Wall -g -fPIC -std=c++11
 # define any directories containing header files other than /usr/include
 #
 INCLUDES = -I./inc -I/usr/include/python2.7 -I/usr/local/Cellar/hdf5/1.8.16_1/include -I/Users/marjon/local/dlib-18.18
+INCLUDES += -I/home/carguelles/programs/SNOT/local/include
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
 LFLAGS = -L/usr/local/Cellar/hdf5/1.8.16_1/lib
+LFLAGS += -L${PREFIX}
 
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname 
 #   option, something like (this will link in libmylib.so and libm.so:
-LIBS = -lpython2.7 -lm -lhdf5 -lhdf5_cpp  
+LIBS = -lpython2.7 -Wl,--rpath=${PREFIX} -L${PREFIX} -lhdf5_cpp -lhdf5 -lz -ldl -lm
+#LIBS = -lpython2.7 -lhdf5_cpp -lhdf5 -lsz -lz -ldl -lm
 
 # define the C source files
 #SRCS = src/Verosimilitud.cpp src/Tools.cpp

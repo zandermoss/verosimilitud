@@ -1,7 +1,7 @@
 #include "EffectiveArea.h"
 
 EffectiveArea::EffectiveArea(std::string effective_area_path) {
-  H5::H5File file(effective_area_path.c_str(),
+  H5::H5File file(effective_area_path,
                   H5F_ACC_RDONLY);
 
   std::string year_names[] = {"2010", "2011"};
