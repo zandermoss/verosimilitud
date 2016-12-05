@@ -8,6 +8,7 @@ cdef extern from "Verosimilitud.h":
 		Verosimilitud(unsigned int numneu,unsigned int loyear, unsigned int hiyear, char* data_path, char* flux_path, char* effective_area_path, char* detector_correction_path, vector[double] nu_vec, vector[double] antinu_vec)
 
 		vector[double] MinLLH(vector[double] param, vector[double] low_bound, vector[double] high_bound, vector[bool] param_to_minimize)
+		double LLH(vector[double] param)
 
 		void SetEproxCuts(vector[double] cuts)
 		void CalculateExpectation()

@@ -13,7 +13,10 @@ cdef class Verosim:
 
 
 	def MinLLH(self, param, low_bound, high_bound, param_to_minimize):
-		return self._c_verosimilitud.MinLLH(param, low_bound, high_bound, param_to_minimize)	
+		return self._c_verosimilitud.MinLLH(param, low_bound, high_bound, param_to_minimize)
+
+	def LLH(self, param):
+		return self._c_verosimilitud.LLH(param)
 
 	def GetExpDims(self):
 		return self._c_verosimilitud.GetExpDims()
