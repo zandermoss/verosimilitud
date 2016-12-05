@@ -159,22 +159,48 @@ double Verosimilitud::OscillationProbability(size_t energy_index, size_t zenith_
   }
 }
 
-/*
+
+double Verosimilitud::LinInter(double x,double xM, double xP, double yM, double yP) const {
+  double f2=(x-xM)/(xP-xM);
+  double f1=1-f2;
+  return f1*yM + f2*yP;
+}
+
 double Verosimilitud::OscillationProbability(double energy, double zenith,
                                              double anti) const {
-  // Here we call nusheep. Although, would it be better to precalculate an
-  // array?
-  // I think for now I will implement direct calls.
+  double costh=cos(zenith);
+  auto cthit=std::lower_bound((*coszenith_edges).begin(),(*coszenith_edges).end(),costh);
+  if(cthit==(*coszenith_edges).end())
+    throw std::runtime_error("zenith not found in the array.");
+  if(cthit!=(*coszenith_edges).begin())
+    cthit--;
+  size_t cth_M=std::distance((*coszenith_edges).begin(),cthit);
 
-  auto ie = std::lower_bound((*energy_edges).begin(),(*energy_edges).end(),energy);
-  auto cz = std::lower_bound((*coszenith_edges).begin(),(*coszenith_edges).end(),cos(zenith));
+  auto eit=std::lower_bound((*energy_edges).begin(),(*energy_edges).end(),energy);
+  if(eit==(*energy_edges).end())
+    throw std::runtime_error("energy not found in the array.");
+  if(eit!=(*energy_edges).begin())
+    eit--;
+  size_t e_M=std::distance((*energy_edges).begin(),eit);
+
+  double phiMM,phiMP,phiPM,phiPP;
+  size_t e_size = (*energy_edges).size();
   if(anti < 0.5){
-    return nu_osc_prob_array[(*energy_edges).size()*(*cz)+(*ie)];
+    phiMM=nu_osc_prob_array[e_size*(cth_M)+(e_M)];
+    phiMP=nu_osc_prob_array[e_size*(cth_M)+(e_M+1)];
+    phiPM=nu_osc_prob_array[e_size*(cth_M+1)+(e_M)];
+    phiPP=nu_osc_prob_array[e_size*(cth_M+1)+(e_M+1)];
   } else {
-    return nubar_osc_prob_array[(*energy_edges).size()*(*cz)+(*ie)];
+    phiMM=nubar_osc_prob_array[e_size*(cth_M)+(e_M)];
+    phiMP=nubar_osc_prob_array[e_size*(cth_M)+(e_M+1)];
+    phiPM=nubar_osc_prob_array[e_size*(cth_M+1)+(e_M)];
+    phiPP=nubar_osc_prob_array[e_size*(cth_M+1)+(e_M+1)];
   }
+
+  return(LinInter(costh,(*coszenith_edges)[cth_M],(*coszenith_edges)[cth_M+1],
+          LinInter(energy,(*energy_edges)[e_M],(*energy_edges)[e_M+1],phiMM,phiMP),
+          LinInter(energy,(*energy_edges)[e_M],(*energy_edges)[e_M+1],phiPM,phiPP)));
 }
-*/
 
 void Verosimilitud::SetDeSolver(pyoscfunc my_de_solver, void *my_user_data) {
   de_solver = my_de_solver;
@@ -200,14 +226,10 @@ double Verosimilitud::TestFunction(double e, double z) {
 double Verosimilitud::SimpsAvg(double coszmin, double coszmax, double emin,
                                double emax, double anti, int nintervals_e) {
 
-  std::cout << "SimpsAvg 0" << std::endl;
-
   double width = (emax - emin) / (double)nintervals_e;
   double integral = 0;
   double mean = 0;
   double coszval;
-
-  std::cout << "SimpsAvg 1" << std::endl;
 
   for (int j = 0; j < 2; j++) {
     coszval = coszmin + (double)j * (coszmax - coszmin);
@@ -216,7 +238,6 @@ double Verosimilitud::SimpsAvg(double coszmin, double coszmax, double emin,
       integral += 2 * OscillationProbability(emin + 2 * (double)i * width,
                                              acos(coszval), anti);
     }
-  	std::cout << "SimpsAvg 2" << std::endl;
     for (int i = 1; i < (nintervals_e / 2 + 1); i++) {
       integral += 4 * OscillationProbability(emin + (2 * (double)i - 1) * width,
                                              acos(coszval), anti);
@@ -226,7 +247,6 @@ double Verosimilitud::SimpsAvg(double coszmin, double coszmax, double emin,
     mean += integral / (2 * (emax - emin));
     integral = 0;
   }
-  std::cout << "SimpsAvg 3" << std::endl;
   return mean;
 }
 

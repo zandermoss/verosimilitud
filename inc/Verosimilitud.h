@@ -4,7 +4,7 @@
 #include "Tools.h"
 #include <vector>
 #include <math.h>
-#include <Python.h>
+//#include <Python.h>
 #include "Tensor.h"
 #include "EffectiveArea.h"
 #include "ICData.h"
@@ -145,7 +145,8 @@ public:
      clarified in the documentation surrounding "::"OscillationProbability
   */
 
-  //double OscillationProbability(double energy, double zenith, double anti) const;
+  double LinInter(double x,double xM, double xP, double yM, double yP) const;
+  double OscillationProbability(double energy, double zenith, double anti) const;
   double OscillationProbability(size_t energy, size_t zenith, size_t anti) const;
 
   //--------------------------------------------------------//
