@@ -9,16 +9,19 @@ public:
   ~Tensor(void);
   double Index(unsigned int *indicies);
   void SetIndex(unsigned int *indicies, double value);
-  double *GetDataPointer(void);
-  unsigned int GetDataLength(void);
-  unsigned int GetRank(void);
-  void GetDims(unsigned int *dims);
-
+  double *GetDataPointer(void) const;
+  unsigned int GetDataLength(void) const;
+  unsigned int GetRank(void) const;
+  void GetDims(unsigned int *dims) const;
+	Tensor operator+(const Tensor&) const;
+	Tensor operator*(const double) const; //scalar multiplication
+	friend Tensor operator*(const double,const Tensor&);
 private:
   double *data;
   unsigned int rank;
   unsigned int *dims;
   unsigned int *strides;
+	unsigned int datasize;
 };
 
 #endif // __TENSOR_H_INCLUDED__

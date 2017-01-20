@@ -38,7 +38,7 @@ ConventionalFlux::ConventionalFlux(std::string detector_correction_path, std::st
     rank = filespace.getSimpleExtentDims(dims);
 
     mydims = new unsigned int[rank];
-    for (unsigned int i = 0; i < rank; i++) {
+    for (int i = 0; i < rank; i++) {
       // std::cout << (unsigned long)(dims[i]) << std::endl;
       mydims[i] = (unsigned int)(dims[i]);
     }
@@ -71,7 +71,7 @@ ConventionalFlux::ConventionalFlux(std::string detector_correction_path, std::st
       rank = filespace.getSimpleExtentDims(dims);
 
       mydims = new unsigned int[rank];
-      for (unsigned int i = 0; i < rank; i++) {
+      for (int i = 0; i < rank; i++) {
         // std::cout << (unsigned long)(dims[i]) << std::endl;
         mydims[i] = (unsigned int)(dims[i]);
       }

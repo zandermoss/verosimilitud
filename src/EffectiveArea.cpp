@@ -46,7 +46,7 @@ EffectiveArea::EffectiveArea(std::string effective_area_path) {
         rank = filespace.getSimpleExtentDims(dims);
 
         mydims = new unsigned int[rank];
-        for (unsigned int i = 0; i < rank; i++) {
+        for (int i = 0; i < rank; i++) {
           // std::cout << (unsigned long)(dims[i]) << std::endl;
           mydims[i] = (unsigned int)(dims[i]);
         }
@@ -74,7 +74,7 @@ EffectiveArea::EffectiveArea(std::string effective_area_path) {
           rank = filespace.getSimpleExtentDims(dims);
 
           mydims = new unsigned int[rank];
-          for (unsigned int i = 0; i < rank; i++) {
+          for (int i = 0; i < rank; i++) {
             // std::cout << (unsigned long)(dims[i]) << std::endl;
             mydims[i] = (unsigned int)(dims[i]);
           }
