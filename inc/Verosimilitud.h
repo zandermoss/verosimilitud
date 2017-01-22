@@ -57,9 +57,7 @@ typedef double (*pyoscfunc)(std::vector<double> argument, void *userdata);
 
 class Verosimilitud {
 protected:
-  void init(unsigned int numneu, unsigned int loyear,
-            unsigned int hiyear,
-            char* data_path, char* flux_path, char* effective_area_path, char* detector_correction_path);
+  void init(unsigned int numneu, char* data_path, char* flux_path, char* effective_area_path);
 public:
   //--------------------------------------------------------//
   //! The Constructor.
@@ -81,34 +79,29 @@ public:
      included. If [0,1], only 2010, and if [1,2], only 2011.
   */
 
-  Verosimilitud(unsigned int numneu, unsigned int loyear,
-                unsigned int hiyear,
-                 char* data_path,char* flux_path, char* effective_area_path, char* detector_correction_path):
+  Verosimilitud(unsigned int numneu, char* data_path,char* flux_path, char* effective_area_path):
     ioscillation(false),inusquids(false),
     de_solver(NULL),user_data(NULL),nusquids(NULL)
   {
-    init(numneu,loyear,hiyear,data_path,flux_path,effective_area_path,detector_correction_path);
+    init(numneu,data_path,flux_path,effective_area_path);
   }
 
-  Verosimilitud(unsigned int numneu, unsigned int loyear,
-                unsigned int hiyear,
-                 char* data_path,char* flux_path, char* effective_area_path, char* detector_correction_path,
+  Verosimilitud(unsigned int numneu, char* data_path,char* flux_path, char* effective_area_path,
                  std::shared_ptr<nusquids::nuSQUIDSAtm<>> nusquids):
     ioscillation(true),inusquids(true),
     de_solver(NULL),user_data(NULL),nusquids(nusquids)
   {
     nuSQuIDSFillOscProb();
-    init(numneu,loyear,hiyear,data_path,flux_path,effective_area_path,detector_correction_path);
+    init(numneu,data_path,flux_path,effective_area_path);
   }
 
-  Verosimilitud(unsigned int numneu, unsigned int loyear,
-                unsigned int hiyear,
-                char* data_path, char* flux_path, char* effective_area_path, char* detector_correction_path,
+  Verosimilitud(unsigned int numneu, 
+                char* data_path, char* flux_path, char* effective_area_path,
                 std::vector<double> nu_osc_prob_array,std::vector<double> nubar_osc_prob_array):
     ioscillation(true),inusquids(false),
     de_solver(NULL),user_data(NULL),nusquids(NULL),nu_osc_prob_array(nu_osc_prob_array),nubar_osc_prob_array(nubar_osc_prob_array)
   {
-    init(numneu,loyear,hiyear,data_path,flux_path,effective_area_path,detector_correction_path);
+    init(numneu,data_path,flux_path,effective_area_path);
   }
 
   /*
@@ -360,6 +353,13 @@ this function, see the documentation for "::"GetFluxVec
                              std::vector<double> high_bound,
                              std::vector<bool> param_to_minimize);
 
+
+
+	unsigned int EfficiencySwitch(double) const;
+
+	void PerturbExpectation(const dlib::matrix<double, 0, 1> & nuisance, Tensor* perturbed_exp) const;
+
+
   //--------------------------------------------------------//
   //! Calculates Chi2 from IC data and the calculated expectation tensors.
   //! Perturbs the expectation tensor according to input nuisance parameters.
@@ -485,19 +485,19 @@ this function, see the documentation for "::"GetFluxVec
   //--------------------------------------------------------//
   //! The number of bins to use in expectation along the true energy axis.
 
-  const unsigned int NeutrinoEnergyBins = 280;
+  const unsigned int NeutrinoEnergyBins = 201;
 
   //--------------------------------------------------------//
   //! The number of bins to use in expectation and data along the cos(zenith)
   //! axis.
 
-  const unsigned int CosZenithBins = 11;
+  const unsigned int CosZenithBins = 22;
 
   //--------------------------------------------------------//
   //! The number of bins to use in expectation and data along the energy proxy
   //! axis.
 
-  const unsigned int EnergyProxyBins = 50;
+  const unsigned int EnergyProxyBins = 11;
 
   //--------------Marjon new function ---------------------//
   //! One stop shop for LLH
@@ -505,6 +505,8 @@ this function, see the documentation for "::"GetFluxVec
 
 protected:
   unsigned int data_years[2];
+
+	unsigned int num_efficiencies;
 
   int simps_nintervals;
   bool const ioscillation;
@@ -549,7 +551,7 @@ protected:
   std::vector<double> *coszenith_centers;
 
   // is this a problem below???
-  std::vector<std::shared_ptr<Tensor>> expectation;
+  std::vector<std::vector<std::shared_ptr<Tensor>>> expectation;
 
   EffectiveArea *eff_area;
   Tensor *area;
@@ -559,7 +561,7 @@ protected:
 
   Tensor *data;
 
-  ICData *icd[2];
+  ICData *icd;
 
   ConventionalFlux *conv_flux;
   Tensor *flux;
@@ -578,6 +580,9 @@ protected:
   const double r_kpi_sigma = 0.1;
   const double r_nubarnu_mean = 1;
   const double r_nubarnu_sigma = 0.025;
+	//FIXME GET VALUES!!
+	const double efficiency_mean = 0.99;
+	const double efficiency_sigma = 0.1;
 
 private:
   // caches for memory efficiency

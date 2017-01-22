@@ -3,6 +3,7 @@
 #include <string>
 #include <algorithm>
 #include "Tensor.h"
+#include <math.h>
 
 ICData::ICData(Tensor *t_eprox_edges, Tensor *t_cosz_edges) {
   cosz_edges = new std::vector<double>(CosZenithBins + 1, 0);
@@ -35,10 +36,11 @@ void ICData::ReadCSV(void) {
       value = value.substr(value.find_first_of(" ") + 1);
       tokens.push_back(token);
     }
-    if (tokens.size() < 5) {
+    if (tokens.size() < 2) {
       break;
     }
-    cosz.push_back(atof(tokens[tokens.size() - 1].c_str()));
+		//Conversion here from zenith to cos(zenith)
+    cosz.push_back(cos(atof(tokens[tokens.size() - 1].c_str())));
     eprox.push_back(atof(tokens[tokens.size() - 2].c_str()));
   }
 }

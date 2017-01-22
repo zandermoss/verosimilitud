@@ -8,14 +8,12 @@
 
 class ConventionalFlux {
 public:
-  ConventionalFlux(std::string detector_correction_path, std::string flux_path);
+  ConventionalFlux(std::string flux_path);
   ~ConventionalFlux();
 
-  Tensor *GetDetCorr(unsigned int *index);
   Tensor *GetFlux(unsigned int *index);
 
 private:
-  Tensor *detcorr[2];
   Tensor *flux[4];
 };
 

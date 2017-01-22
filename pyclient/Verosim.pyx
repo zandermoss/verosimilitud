@@ -5,9 +5,9 @@ import numpy as np
 
 cdef class Verosim:
 	cdef cVerosimilitud.Verosimilitud* _c_verosimilitud
-	def __cinit__(self,unsigned int numneu, loyear, hiyear, data_path, flux_path,effective_area_path,detector_correction_path, nu_vec, antinu_vec):
+	def __cinit__(self,unsigned int numneu, data_path, flux_path,effective_area_path, nu_vec, antinu_vec):
 
-		self._c_verosimilitud = <cVerosimilitud.Verosimilitud *>new cVerosimilitud.Verosimilitud(numneu,loyear,hiyear,data_path,flux_path,effective_area_path,detector_correction_path,nu_vec, antinu_vec)
+		self._c_verosimilitud = <cVerosimilitud.Verosimilitud *>new cVerosimilitud.Verosimilitud(numneu,data_path,flux_path,effective_area_path,nu_vec, antinu_vec)
 		if self._c_verosimilitud is NULL:
 			raise MemoryError()
 
