@@ -485,19 +485,19 @@ this function, see the documentation for "::"GetFluxVec
   //--------------------------------------------------------//
   //! The number of bins to use in expectation along the true energy axis.
 
-  const unsigned int NeutrinoEnergyBins = 201;
+  const unsigned int NeutrinoEnergyBins = 200;
 
   //--------------------------------------------------------//
   //! The number of bins to use in expectation and data along the cos(zenith)
   //! axis.
 
-  const unsigned int CosZenithBins = 22;
+  const unsigned int CosZenithBins = 21;
 
   //--------------------------------------------------------//
   //! The number of bins to use in expectation and data along the energy proxy
   //! axis.
 
-  const unsigned int EnergyProxyBins = 11;
+  const unsigned int EnergyProxyBins = 10;
 
   //--------------Marjon new function ---------------------//
   //! One stop shop for LLH
