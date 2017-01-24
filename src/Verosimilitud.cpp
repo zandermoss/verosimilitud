@@ -59,12 +59,10 @@ void Verosimilitud::init(unsigned int numneu,
   //			22		17900.8
   //			23		22535.7
 
-	//FIXME implement proper energy cuts!
-
   //(*eprox_cuts)[0] = 6;
   //(*eprox_cuts)[1] = 23;
-  	(*eprox_cuts)[0]=0;
-  	(*eprox_cuts)[1]=EnergyProxyBins;
+  (*eprox_cuts)[0]=0;
+  (*eprox_cuts)[1]=EnergyProxyBins;
 
   (*cosz_cuts)[0] = 0;
   (*cosz_cuts)[1] = CosZenithBins;
@@ -79,14 +77,12 @@ void Verosimilitud::init(unsigned int numneu,
     ip1 = i + 1;
     (*eprox_centers)[i] =
         (EnergyProxyEdges->Index(&i) + EnergyProxyEdges->Index(&ip1)) / 2.0;
-		std::cout << "ProxyEDGE: " << i << "   : " << EnergyProxyEdges->Index(&i) << std::endl;
   }
 
   for (unsigned int i = 0; i < CosZenithBins; i++) {
     ip1 = i + 1;
     (*coszenith_centers)[i] =
         (CosZenithEdges->Index(&i) + CosZenithEdges->Index(&ip1)) / 2.0;
-		std::cout << "ZenithEDGE: " << i << "   : " << CosZenithEdges->Index(&i) << std::endl;
   }
 
   double *eprox_edges_array = EnergyProxyEdges->GetDataPointer();
@@ -153,10 +149,9 @@ double Verosimilitud::LinInter(double x,double xM, double xP, double yM, double 
   return f1*yM + f2*yP;
 }
 
-double Verosimilitud::OscillationProbability(double energy, double zenith,
+double Verosimilitud::OscillationProbability(double energy, double costh,
                                              double anti) const {
-  double costh=cos(zenith);
-	std::cout << "COSTH: " << costh << std::endl;
+//  double costh=cos(zenith);
   auto cthit=std::lower_bound((*coszenith_edges).begin(),(*coszenith_edges).end(),costh);
   if(cthit==(*coszenith_edges).end())
     throw std::runtime_error("zenith not found in the array.");
@@ -219,22 +214,22 @@ double Verosimilitud::SimpsAvg(double coszmin, double coszmax, double emin,
   double mean = 0;
   double coszval;
 
-	std::cout << "COSZMIN: " << coszmin <<std::endl;
-	std::cout << "COSZMAX: " << coszmax <<std::endl;
-
-
   for (int j = 0; j < 2; j++) {
     coszval = coszmin + (double)j * (coszmax - coszmin);
-    integral += OscillationProbability(emin, acos(coszval), anti);
+    //integral += OscillationProbability(emin, acos(coszval), anti);
+    integral += OscillationProbability(emin, coszval, anti);
     for (int i = 1; i < (nintervals_e / 2); i++) {
       integral += 2 * OscillationProbability(emin + 2 * (double)i * width,
-                                             acos(coszval), anti);
+                                             coszval, anti);
+                                            // acos(coszval), anti);
     }
     for (int i = 1; i < (nintervals_e / 2 + 1); i++) {
       integral += 4 * OscillationProbability(emin + (2 * (double)i - 1) * width,
-                                             acos(coszval), anti);
+                                             coszval, anti);
+                                             //acos(coszval), anti);
     }
-    integral += OscillationProbability(emax, acos(coszval), anti);
+    //integral += OscillationProbability(emax, acos(coszval), anti);
+    integral += OscillationProbability(emax, coszval, anti);
     integral *= width / 3.0;
     mean += integral / (2 * (emax - emin));
     integral = 0;
