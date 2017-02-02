@@ -18,6 +18,9 @@ cdef class Verosim:
 	def LLH(self, param):
 		return self._c_verosimilitud.LLH(param)
 
+	def LLHGrad(self, param, index):
+		return self._c_verosimilitud.LLHGrad(param,index)
+
 	def GetExpDims(self):
 		return self._c_verosimilitud.GetExpDims()
 

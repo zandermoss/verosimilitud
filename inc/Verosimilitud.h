@@ -503,6 +503,8 @@ this function, see the documentation for "::"GetFluxVec
   //! One stop shop for LLH
   double LLH(std::vector<double> nuisance);
 
+  double LLHGrad(std::vector<double> nuisance, unsigned int index);
+
 protected:
   unsigned int data_years[2];
 
@@ -580,9 +582,8 @@ protected:
   const double r_kpi_sigma = 0.1;
   const double r_nubarnu_mean = 1;
   const double r_nubarnu_sigma = 0.025;
-	//FIXME GET VALUES!!
-	const double efficiency_mean = 0.99;
-	const double efficiency_sigma = 0.1;
+	const double efficiency_mean = 1.0;
+	const double efficiency_sigma = 0.3;
 
 private:
   // caches for memory efficiency

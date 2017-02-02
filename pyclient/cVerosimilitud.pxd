@@ -9,6 +9,7 @@ cdef extern from "Verosimilitud.h":
 
 		vector[double] MinLLH(vector[double] param, vector[double] low_bound, vector[double] high_bound, vector[bool] param_to_minimize)
 		double LLH(vector[double] param)
+		double LLHGrad(vector[double] param, unsigned int index)
 
 		void SetEproxCuts(vector[double] cuts)
 		void CalculateExpectation()

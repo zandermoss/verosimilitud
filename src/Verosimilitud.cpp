@@ -25,7 +25,7 @@ void Verosimilitud::init(unsigned int numneu,
   std::string effective_area_path(char_effective_area_path);
 
   // initialize cache
-  gradient_cache = dlib::matrix<double, 0, 1>(4);
+  gradient_cache = dlib::matrix<double, 0, 1>(5);
 
   simps_nintervals = 2;
 
@@ -288,6 +288,7 @@ void Verosimilitud::CalculateExpectation() {
           unsigned int area_indices[2] = {effi, anti};
           area = eff_area->GetArea(area_indices);
 
+
 	        // Loop over mesons
 	        for (unsigned int meson = 0; meson < 2; meson++) {
 	
@@ -311,13 +312,18 @@ void Verosimilitud::CalculateExpectation() {
 
               double AvgFlux = flux->Index(flux_indices);
               double EffAreaVal = area->Index(eff_area_indices);
+
+
+
               unsigned int exp_indices[2] = {ep, z};
 
               double last = (expectation[effi])[which_flux]->Index(exp_indices);
+//              double current =
+//                  last +
+//                 	AvgFlux * EffAreaVal * livetime * oscprob;
               double current =
                   last +
-                 	AvgFlux * EffAreaVal * livetime * oscprob;
-
+                 	AvgFlux * EffAreaVal * oscprob;
               (expectation[effi])[which_flux]->SetIndex(exp_indices, current);
 						}
           }
@@ -371,6 +377,8 @@ std::vector<double> Verosimilitud::GetDataVec(void) {
   std::vector<double> datvec(datarray, datarray + datlen);
   unsigned int datdims[] = {0, 0};
   data->GetDims(datdims);
+	std::cout << "DATDIM0: " << datdims[0] << std::endl;
+	std::cout << "DATDIM1: " << datdims[1] << std::endl;
   dat_dimvec.push_back(datdims[0]);
   dat_dimvec.push_back(datdims[1]);
   return datvec;
@@ -395,6 +403,7 @@ std::vector<double> Verosimilitud::MinLLH(std::vector<double> param,
     std::cout << "sizes high do not match. break" << std::endl;
     exit(1);
   }
+
 
   unsigned int number_of_parameters_to_minimize =
       std::count(param_to_minimize.begin(), param_to_minimize.end(), true);
@@ -456,8 +465,15 @@ unsigned int Verosimilitud::EfficiencySwitch(double eff) const{
 			return i;
 		}
 	}
-	throw std::runtime_error("Efficiency out of bounds.");
-	return 1000;
+	if (eff<(eff_area->GetEff(0))){
+		return 0;
+	}
+	else if (eff>(eff_area->GetEff(num_efficiencies-1))){ 
+		return num_efficiencies-2;
+	}
+	else{
+		throw std::runtime_error("Efficiency switch??");
+	}
 }
 
 void Verosimilitud::PerturbExpectation(const dlib::matrix<double, 0, 1> &nuisance, Tensor* perturbed_expectation) const{
@@ -469,6 +485,7 @@ void Verosimilitud::PerturbExpectation(const dlib::matrix<double, 0, 1> &nuisanc
   const double efficiency = nuisance(4);
 
 	unsigned int low_eff_index = EfficiencySwitch(efficiency);
+//	std::cout << "LE Index: " << low_eff_index << std::endl;
 	double low_eff = eff_area->GetEff(low_eff_index);
 	double high_eff = eff_area->GetEff(low_eff_index+1);
 	double eff_pert_scalars[2];
@@ -623,7 +640,7 @@ dlib::matrix<double, 0, 1> Verosimilitud::Chi2Gradient(const dlib::matrix<double
 
 
       if (!(std::isnan(LogPoissonProbability(scalar_data, fully_perturbed_scalar)))) {
-	   		grad4 -= norm * pow(center / E0, -gamma) * ((eff_pert_scalars[1] - eff_pert_scalars[0])/(high_eff-low_eff))*(scalar_data / fully_perturbed_scalar - 1);
+	   		grad4 += norm * pow(center / E0, -gamma) * ((eff_pert_scalars[1] - eff_pert_scalars[0])/(high_eff-low_eff))*(scalar_data / fully_perturbed_scalar - 1);
 			}
 
 
@@ -638,25 +655,30 @@ dlib::matrix<double, 0, 1> Verosimilitud::Chi2Gradient(const dlib::matrix<double
 
 
       if (!(std::isnan(LogPoissonProbability(scalar_data, fully_perturbed_scalar)))) {
-        grad0 -= fully_perturbed_scalar / norm * (scalar_data / fully_perturbed_scalar - 1);
-        grad1 -= -fully_perturbed_scalar * log(center / E0) *
+        grad0 += (fully_perturbed_scalar / norm) * (scalar_data / fully_perturbed_scalar - 1);
+        grad1 += (-1.0)* fully_perturbed_scalar * log(center / E0) *
                  (scalar_data / fully_perturbed_scalar - 1);
-        grad2 -= norm * pow(center / E0, -gamma) *
+        grad2 += norm * pow(center / E0, -gamma) *
                  (scalar_exp[2] + r_nubarnu * scalar_exp[3]) *
                  (scalar_data / fully_perturbed_scalar - 1);
-        grad3 -= norm * pow(center / E0, -gamma) *
+        grad3 += norm * pow(center / E0, -gamma) *
                  (scalar_exp[1] + r_kpi * scalar_exp[3]) *
                  (scalar_data / fully_perturbed_scalar - 1);
 			}
 
 
-		  grad0 += 2.*(norm - norm_mean) / pow(norm_sigma, 2);
-		  grad1 += 2.*(gamma - gamma_mean) / pow(gamma_sigma, 2);
-		  grad2 += 2.*(r_kpi - r_kpi_mean) / pow(r_kpi_sigma, 2);
-		  grad3 += 2.*(r_nubarnu - r_nubarnu_mean) / pow(r_nubarnu_sigma, 2);
-		  grad4 += 2.*(efficiency - efficiency_mean) / pow(efficiency_sigma, 2);
 		}
 	}
+	//grad0 += 2.*(norm - norm_mean) / pow(norm_sigma, 2);
+	//grad1 += 2.*(gamma - gamma_mean) / pow(gamma_sigma, 2);
+	//grad2 += 2.*(r_kpi - r_kpi_mean) / pow(r_kpi_sigma, 2);
+	//grad3 += 2.*(r_nubarnu - r_nubarnu_mean) / pow(r_nubarnu_sigma, 2);
+	//grad4 += 2.*(efficiency - efficiency_mean) / pow(efficiency_sigma, 2);
+	grad0 += (-1.0)*(norm - norm_mean) / pow(norm_sigma, 2);
+	grad1 += (-1.0)*(gamma - gamma_mean) / pow(gamma_sigma, 2);
+	grad2 += (-1.0)*(r_kpi - r_kpi_mean) / pow(r_kpi_sigma, 2);
+	grad3 += (-1.0)*(r_nubarnu - r_nubarnu_mean) / pow(r_nubarnu_sigma, 2);
+	grad4 += (-1.0)*(efficiency - efficiency_mean) / pow(efficiency_sigma, 2);
 	
   gradient_cache(0) = grad0;
   gradient_cache(1) = grad1;
@@ -664,7 +686,7 @@ dlib::matrix<double, 0, 1> Verosimilitud::Chi2Gradient(const dlib::matrix<double
   gradient_cache(3) = grad3;
   gradient_cache(4) = grad4;
 
-  return 2.*gradient_cache;
+  return -2.*gradient_cache;
 }
 
 double Verosimilitud::LLH(std::vector<double> param) {
@@ -678,6 +700,22 @@ double Verosimilitud::LLH(std::vector<double> param) {
   nuisance(4) = (param)[4];
 
   return Chi2(nuisance);
+}
+
+
+double Verosimilitud::LLHGrad(std::vector<double> param, unsigned int index) {
+
+  dlib::matrix<double, 0, 1> nuisance(5);
+
+  nuisance(0) = (param)[0];
+  nuisance(1) = (param)[1];
+  nuisance(2) = (param)[2];
+  nuisance(3) = (param)[3];
+  nuisance(4) = (param)[4];
+
+  dlib::matrix<double, 0, 1> grad(5);
+	grad = Chi2Gradient(nuisance);
+  return grad(index);
 }
 
 /*

@@ -23,8 +23,8 @@ private:
   std::ifstream datafile;
   std::vector<double> cosz;
   std::vector<double> eprox;
-  const unsigned int CosZenithBins = 11;
-  const unsigned int EnergyProxyBins = 50;
+  const unsigned int CosZenithBins = 21;
+  const unsigned int EnergyProxyBins = 10;
   std::vector<double> *cosz_edges;
   std::vector<double> *eprox_edges;
 };
