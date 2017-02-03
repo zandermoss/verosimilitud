@@ -446,7 +446,8 @@ std::vector<double> Verosimilitud::MinLLH(std::vector<double> param,
   }
 
   dlib::find_min_box_constrained(dlib::bfgs_search_strategy(),
-                 dlib::objective_delta_stop_strategy(1e-7),
+                 //dlib::objective_delta_stop_strategy(1e-10),
+                 dlib::gradient_norm_stop_strategy(1e-8),
                  Chi2_caller(this,param,param_to_minimize),
                  Chi2grad_caller(this,param,param_to_minimize),
                  nuisance,

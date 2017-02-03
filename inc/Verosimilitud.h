@@ -108,10 +108,12 @@ public:
     ioscillation(true),inusquids(false),
     de_solver(NULL),user_data(NULL),nusquids(NULL),nu_osc_prob_array(nu_osc_prob_array),nubar_osc_prob_array(nubar_osc_prob_array)
   {
+    /*
     std::cout << data_path << std::endl;
     std::cout << effective_area_path << std::endl;
     std::cout << detector_correction_path << std::endl;
     std::cout << flux_path << std::endl;
+    */
     init(numneu,loyear,hiyear,data_path,flux_path,effective_area_path,detector_correction_path);
   }
 
