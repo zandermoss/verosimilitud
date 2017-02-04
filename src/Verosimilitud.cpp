@@ -424,8 +424,8 @@ std::vector<double> Verosimilitud::MinLLH(std::vector<double> param,
 
   dlib::find_min_box_constrained(dlib::bfgs_search_strategy(),
                  dlib::objective_delta_stop_strategy(1e-7),
-                 Chi2_caller(this,param,param_to_minimize),
-                 Chi2grad_caller(this,param,param_to_minimize),
+                 LLH_caller(this,param,param_to_minimize),
+                 LLHgrad_caller(this,param,param_to_minimize),
                  nuisance,
                  lo_bounds,
                  hi_bounds);
@@ -433,8 +433,8 @@ std::vector<double> Verosimilitud::MinLLH(std::vector<double> param,
 //  dlib::find_min_box_constrained(
 //      dlib::bfgs_search_strategy(), dlib::gradient_norm_stop_strategy(1e-6),
 //      //dlib::lbfgs_search_strategy(10), dlib::gradient_norm_stop_strategy(1e-1),
-//      Chi2_caller(this, param, param_to_minimize),
-//      Chi2grad_caller(this, param, param_to_minimize), nuisance, lo_bounds,
+//      LLH_caller(this, param, param_to_minimize),
+//      LLHgrad_caller(this, param, param_to_minimize), nuisance, lo_bounds,
 //      hi_bounds);
 
   std::vector<double> ret(param.size() + 1, 0);
@@ -451,7 +451,8 @@ std::vector<double> Verosimilitud::MinLLH(std::vector<double> param,
       param_eval(i) = param[i];
     }
   }
-  ret[param.size()] = Chi2(param_eval);
+	//FIXME: return LLH or Chi2 estimate?
+  ret[param.size()] = LLH(param_eval);
 
   return ret;
 }
@@ -519,7 +520,7 @@ void Verosimilitud::PerturbExpectation(const dlib::matrix<double, 0, 1> &nuisanc
 }
 
 
-double Verosimilitud::Chi2(const dlib::matrix<double, 0, 1> &nuisance) const {
+double Verosimilitud::LLH(const dlib::matrix<double, 0, 1> &nuisance) const {
 
   const double norm = nuisance(0);
   const double gamma = nuisance(1);
@@ -529,7 +530,6 @@ double Verosimilitud::Chi2(const dlib::matrix<double, 0, 1> &nuisance) const {
 
   unsigned int indices[2];
   double llh = 0;
-  double sllh = 0;
   double prob;
 
 	//Calculate the reduced perturbed expectation tensor.
@@ -556,7 +556,6 @@ double Verosimilitud::Chi2(const dlib::matrix<double, 0, 1> &nuisance) const {
 
 	delete perturbed_expectation;
 
-  // std::cout<<"V.Chi2, stop loop"<<std::endl;
 
   double norm_penalty = LogGaussianProbability(norm, norm_mean, norm_sigma);
   double gamma_penalty = LogGaussianProbability(gamma, gamma_mean, gamma_sigma);
@@ -564,36 +563,13 @@ double Verosimilitud::Chi2(const dlib::matrix<double, 0, 1> &nuisance) const {
   double r_nubarnu_penalty =
       LogGaussianProbability(r_nubarnu, r_nubarnu_mean, r_nubarnu_sigma);
 	double efficiency_penalty = LogGaussianProbability(efficiency, efficiency_mean, efficiency_sigma);
-  //	std::cout << "NORM PENALTY  " << norm_penalty << std::endl;
-  //	std::cout << "GAMMA PENALTY  " << gamma_penalty << std::endl;
-  //	std::cout << "GAMMA  " << gamma << std::endl;
-  //	std::cout << "GAMMAmu  " << gamma_mean << std::endl;
-  //	std::cout << "GAMMAsig  " << gamma_sigma << std::endl;
 
   llh += norm_penalty + gamma_penalty + r_kpi_penalty + r_nubarnu_penalty + efficiency_penalty;
 
-  // Calculate saturated log-likelihood
-
-  for (unsigned int ep = (*eprox_cuts)[0]; ep < (*eprox_cuts)[1]; ep++) {
-    for (unsigned int z = (*cosz_cuts)[0]; z < (*cosz_cuts)[1]; z++) {
-      indices[0] = ep;
-      indices[1] = z;
-      double scalar_data = data->Index(indices);
-      double satprob = LogPoissonProbability(scalar_data, scalar_data);
-      if (std::isnan(satprob)) {
-        satprob = 0;
-      }
-      sllh += satprob;
-    }
-  }
-
-  //	std::cout << "CHI2: " << 2*(sllh-llh) << std::endl;
-  //	std::cout << std::endl;
-
-  return 2. * (sllh - llh);
+  return llh;
 }
 
-dlib::matrix<double, 0, 1> Verosimilitud::Chi2Gradient(const dlib::matrix<double, 0, 1> &nuisance) const {
+dlib::matrix<double, 0, 1> Verosimilitud::LLHGradient(const dlib::matrix<double, 0, 1> &nuisance) const {
   unsigned int indices[2];
   double scalar_exp[4];
 
@@ -669,11 +645,7 @@ dlib::matrix<double, 0, 1> Verosimilitud::Chi2Gradient(const dlib::matrix<double
 
 		}
 	}
-	//grad0 += 2.*(norm - norm_mean) / pow(norm_sigma, 2);
-	//grad1 += 2.*(gamma - gamma_mean) / pow(gamma_sigma, 2);
-	//grad2 += 2.*(r_kpi - r_kpi_mean) / pow(r_kpi_sigma, 2);
-	//grad3 += 2.*(r_nubarnu - r_nubarnu_mean) / pow(r_nubarnu_sigma, 2);
-	//grad4 += 2.*(efficiency - efficiency_mean) / pow(efficiency_sigma, 2);
+
 	grad0 += (-1.0)*(norm - norm_mean) / pow(norm_sigma, 2);
 	grad1 += (-1.0)*(gamma - gamma_mean) / pow(gamma_sigma, 2);
 	grad2 += (-1.0)*(r_kpi - r_kpi_mean) / pow(r_kpi_sigma, 2);
@@ -686,37 +658,75 @@ dlib::matrix<double, 0, 1> Verosimilitud::Chi2Gradient(const dlib::matrix<double
   gradient_cache(3) = grad3;
   gradient_cache(4) = grad4;
 
-  return -2.*gradient_cache;
+  return gradient_cache;
 }
 
-double Verosimilitud::LLH(std::vector<double> param) {
 
+double Verosimilitud::Chi2(const dlib::matrix<double, 0, 1> &nuisance) const {
+  // Calculate saturated log-likelihood
+  unsigned int indices[2];
+  double sllh = 0;
+  for (unsigned int ep = (*eprox_cuts)[0]; ep < (*eprox_cuts)[1]; ep++) {
+    for (unsigned int z = (*cosz_cuts)[0]; z < (*cosz_cuts)[1]; z++) {
+      indices[0] = ep;
+      indices[1] = z;
+      double scalar_data = data->Index(indices);
+      double satprob = LogPoissonProbability(scalar_data, scalar_data);
+      if (std::isnan(satprob)) {
+        satprob = 0;
+      }
+      sllh += satprob;
+    }
+  }
+	double llh = LLH(nuisance);
+  return 2. * (sllh - llh);
+}
+
+dlib::matrix<double, 0, 1> Verosimilitud::Chi2Gradient(const dlib::matrix<double, 0, 1> &nuisance) const {
+	return -2.0*LLHGradient(nuisance);
+}
+
+
+
+double Verosimilitud::GetLLH(std::vector<double> param) {
   dlib::matrix<double, 0, 1> nuisance(5);
+	for (int i=0; i<5; i++){
+  	nuisance(i) = (param)[i];
+	}
 
-  nuisance(0) = (param)[0];
-  nuisance(1) = (param)[1];
-  nuisance(2) = (param)[2];
-  nuisance(3) = (param)[3];
-  nuisance(4) = (param)[4];
-
-  return Chi2(nuisance);
+	return LLH(nuisance);
 }
 
-
-double Verosimilitud::LLHGrad(std::vector<double> param, unsigned int index) {
-
+double Verosimilitud::GetLLHGradient(std::vector<double> param, unsigned int index) {
   dlib::matrix<double, 0, 1> nuisance(5);
-
-  nuisance(0) = (param)[0];
-  nuisance(1) = (param)[1];
-  nuisance(2) = (param)[2];
-  nuisance(3) = (param)[3];
-  nuisance(4) = (param)[4];
-
-  dlib::matrix<double, 0, 1> grad(5);
-	grad = Chi2Gradient(nuisance);
-  return grad(index);
+	for (int i=0; i<5; i++){
+  	nuisance(i) = (param)[i];
+	}
+  dlib::matrix<double, 0, 1> gradient(5);
+	gradient = LLHGradient(nuisance);
+	return gradient(index);
 }
+
+
+double Verosimilitud::GetChi2(std::vector<double> param) {
+  dlib::matrix<double, 0, 1> nuisance(5);
+	for (int i=0; i<5; i++){
+  	nuisance(i) = (param)[i];
+	}
+
+	return Chi2(nuisance);
+}
+
+double Verosimilitud::GetChi2Gradient(std::vector<double> param, unsigned int index) {
+  dlib::matrix<double, 0, 1> nuisance(5);
+	for (int i=0; i<5; i++){
+  	nuisance(i) = (param)[i];
+	}
+  dlib::matrix<double, 0, 1> gradient(5);
+	gradient = Chi2Gradient(nuisance);
+	return gradient(index);
+}
+
 
 /*
 void Print2Tensor(Tensor& t){

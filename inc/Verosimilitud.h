@@ -383,9 +383,6 @@ this function, see the documentation for "::"GetFluxVec
 
   double Chi2(const dlib::matrix<double, 0, 1> &nuisance) const;
 
-  double operator()(const dlib::matrix<double, 0, 1> &nuisance) const {
-    return Chi2(nuisance);
-  }
 
 
   //--------------------------------------------------------//
@@ -499,11 +496,19 @@ this function, see the documentation for "::"GetFluxVec
 
   const unsigned int EnergyProxyBins = 10;
 
-  //--------------Marjon new function ---------------------//
-  //! One stop shop for LLH
-  double LLH(std::vector<double> nuisance);
 
-  double LLHGrad(std::vector<double> nuisance, unsigned int index);
+  double LLH(const dlib::matrix<double, 0, 1> &nuisance) const;
+  double operator()(const dlib::matrix<double, 0, 1> &nuisance) const {
+    return LLH(nuisance);
+  }
+
+  dlib::matrix<double, 0, 1> LLHGradient(const dlib::matrix<double, 0, 1> &nuisance) const;
+
+	double GetLLH(std::vector<double> param);
+	double GetChi2(std::vector<double> param);
+	double GetLLHGradient(std::vector<double> param, unsigned int index);
+	double GetChi2Gradient(std::vector<double> param, unsigned int index);
+
 
 protected:
   unsigned int data_years[2];
@@ -590,7 +595,14 @@ private:
   mutable dlib::matrix<double, 0, 1> gradient_cache;
 };
 
-class Chi2_caller {
+
+//--------------------------------------------------------//
+//! An interface class to provide the dlib minimizer with access to LLH.
+/*!
+The operator overload yields (-1.0) times the LLH, so we minimize over 
+negative LLH.
+*/
+class LLH_caller {
 private:
   // members
   Verosimilitud *verosim;
@@ -599,7 +611,7 @@ private:
   mutable dlib::matrix<double,0,1> param_eval;
 public:
   // constructor
-  Chi2_caller(Verosimilitud *verosim, std::vector<double> param,
+  LLH_caller(Verosimilitud *verosim, std::vector<double> param,
               std::vector<bool> param_to_minimize):
     verosim(verosim), param(param), param_to_minimize(param_to_minimize),
     param_eval(dlib::matrix<double,0,1>(param.size()))
@@ -619,13 +631,19 @@ public:
     /*
     std::cout << "param: " << nuisance << std:: endl;
     std::cout << "eparam: " << param_eval << std:: endl;
-    std::cout << "Chi2 " << verosim->Chi2(param_eval) << std::endl;
+    std::cout << "LLH " << verosim->LLH(param_eval) << std::endl;
     */
-    return verosim->Chi2(param_eval);
+    return (-1.0)*verosim->LLH(param_eval);
   }
 };
 
-class Chi2grad_caller {
+//--------------------------------------------------------//
+//! An interface class to provide the dlib minimizer with access to LLHGradient.
+/*!
+The operator overload yields (-1.0) times the LLHGradient, so we minimize over 
+negative LLH.
+*/
+class LLHgrad_caller {
 private:
   // members
   Verosimilitud *verosim;
@@ -636,7 +654,7 @@ private:
   mutable dlib::matrix<double,0,1> grad_eval_return;
 public:
   // constructor
-  Chi2grad_caller(Verosimilitud *verosim, std::vector<double> param,
+  LLHgrad_caller(Verosimilitud *verosim, std::vector<double> param,
                   std::vector<bool> param_to_minimize):
     verosim(verosim), param(param), param_to_minimize(param_to_minimize),
     param_eval(dlib::matrix<double,0,1>(param.size())),
@@ -656,7 +674,7 @@ public:
         param_eval(i) = param[i];
       }
     }
-    grad_eval = verosim->Chi2Gradient(param_eval);
+    grad_eval = verosim->LLHGradient(param_eval);
     unsigned int jj = 0;
     for (unsigned int i = 0; i < param.size(); i++) {
       if (param_to_minimize[i]) {
@@ -668,11 +686,11 @@ public:
     /*
     std::cout << "param: " << nuisance << std:: endl;
     std::cout << "eparam: " << param_eval << std:: endl;
-    std::cout << "Chi2G " << grad_eval << std::endl;
-    std::cout << "Chi2GR " << grad_eval_return << std::endl;
+    std::cout << "LLHG " << grad_eval << std::endl;
+    std::cout << "LLHGR " << grad_eval_return << std::endl;
     */
 
-    return grad_eval_return;
+    return (-1.0)*grad_eval_return;
   }
 };
 

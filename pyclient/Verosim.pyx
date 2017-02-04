@@ -15,11 +15,17 @@ cdef class Verosim:
 	def MinLLH(self, param, low_bound, high_bound, param_to_minimize):
 		return self._c_verosimilitud.MinLLH(param, low_bound, high_bound, param_to_minimize)
 
-	def LLH(self, param):
-		return self._c_verosimilitud.LLH(param)
+	def GetLLH(self, param):
+		return self._c_verosimilitud.GetLLH(param)
 
-	def LLHGrad(self, param, index):
-		return self._c_verosimilitud.LLHGrad(param,index)
+	def GetLLHGradient(self, param, index):
+		return self._c_verosimilitud.GetLLHGradient(param,index)
+
+	def GetChi2(self, param):
+		return self._c_verosimilitud.GetChi2(param)
+
+	def GetChi2Gradient(self, param, index):
+		return self._c_verosimilitud.GetChi2Gradient(param,index)
 
 	def GetExpDims(self):
 		return self._c_verosimilitud.GetExpDims()
@@ -29,12 +35,12 @@ cdef class Verosim:
 
 	def GetEproxEdges(self):
 		return self._c_verosimilitud.GetEproxEdges()
+
 	def GetEnergyEdges(self):
 		return self._c_verosimilitud.GetEnergyEdges()
 
 	def GetCosZenithEdges(self):
 		return self._c_verosimilitud.GetCosZenithEdges()
-
 
 	def CalculateExpectation(self):
 		self._c_verosimilitud.CalculateExpectation()
