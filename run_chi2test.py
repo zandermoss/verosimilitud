@@ -1,25 +1,21 @@
 #! /usr/bin/python
 
-import PhysConst as pc
-import simple_propagate as sp
 import numpy as np
 import matplotlib.pyplot as plt
-import PMNSGen
 import random
 from math import pi
 import math
-from tqdm import tqdm
 
 import Verosim
 
 #Set paths to data, fluxes, and responses.
-data_path="/home/pinkpig/physics/neutrino_decay/nuisance_runs/neutrino_decay/verosimilitud/data/IC86SterileNeutrinoDataRelease/data/observed_events.dat"
-flux_path="/home/pinkpig/physics/neutrino_decay/nuisance_runs/neutrino_decay/verosimilitud/data/IC86SterileNeutrinoDataRelease/atmospheric_flux/averaged/PolyGonato_QGSJET-II-04.h5"
-effective_area_path="/home/pinkpig/physics/neutrino_decay/nuisance_runs/neutrino_decay/verosimilitud/data/IC86SterileNeutrinoDataRelease/systematics_response_arrays/"
+data_path="./data/observed_events.dat"
+flux_path="./data/PolyGonato_QGSJET-II-04.h5"
+effective_area_path="./data/"
 
 
 #Load oscillation probability arrays
-osc_file = np.load("3flav_matter_osc.npz")
+osc_file = np.load("./data/3flav_matter_osc.npz")
 nu_prob = osc_file['nu']
 nubar_prob = osc_file['nubar']
 #nu_prob = np.ones(len(nu_prob))
