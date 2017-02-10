@@ -478,6 +478,8 @@ unsigned int Verosimilitud::EfficiencySwitch(double eff) const{
 }
 
 void Verosimilitud::PerturbExpectation(const dlib::matrix<double, 0, 1> &nuisance, Tensor* perturbed_expectation) const{
+  if(nuisance.size()!=5)
+    throw std::runtime_error("Incorrect number of nuisance parameters supplied.");
 
   const double norm = nuisance(0);
   const double gamma = nuisance(1);
