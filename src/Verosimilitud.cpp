@@ -463,22 +463,23 @@ std::vector<double> Verosimilitud::MinLLH(std::vector<double> param,
 
 
 unsigned int Verosimilitud::EfficiencySwitch(double eff) const{
+	//Check that the efficiency is in range.
+	if (eff<(eff_area->GetEff(0))){
+    throw std::runtime_error("Efficiency out of range (low).");
+	}
+	else if (eff>(eff_area->GetEff(num_efficiencies-1))){ 
+    throw std::runtime_error("Efficiency out of range (high).");
+	}
+	double t_index;
+	//Find nearest efficiency tensor index.
 	//Not very efficient, but the vector is only five elements long!
 	for (unsigned int i=0; i<num_efficiencies-1; i++){
 		double effedges[] = {eff_area->GetEff(i),eff_area->GetEff(i+1)};
 		if ((eff>=effedges[0]) && (eff<effedges[1])){
-			return i;
+			t_index=i;
 		}
 	}
-	if (eff<(eff_area->GetEff(0))){
-		return 0;
-	}
-	else if (eff>(eff_area->GetEff(num_efficiencies-1))){ 
-		return num_efficiencies-2;
-	}
-	else{
-		throw std::runtime_error("Efficiency switch??");
-	}
+	return t_index;
 }
 
 void Verosimilitud::PerturbExpectation(const dlib::matrix<double, 0, 1> &nuisance, Tensor* perturbed_expectation) const{
