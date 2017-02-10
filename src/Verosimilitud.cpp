@@ -389,6 +389,10 @@ std::vector<double> Verosimilitud::MinLLH(std::vector<double> param,
                                           std::vector<double> low_bound,
                                           std::vector<double> high_bound,
                                           std::vector<bool> param_to_minimize) {
+  if (param.size() != 5) {
+    std::cout << "param size not equal to 5. break." << std::endl;
+    exit(1);
+  }
   if (param.size() != param_to_minimize.size()) {
     std::cout << "sizes param do not match. break" << std::endl;
     exit(1);
