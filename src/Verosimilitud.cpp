@@ -16,6 +16,8 @@
 #include <dlib/optimization.h>
 #include <dlib/member_function_pointer.h>
 
+#include "gsl_integrate_wrap.h"
+
 void Verosimilitud::init(unsigned int numneu,
                          char* char_data_path, char* char_flux_path, char* char_effective_area_path)
 {
@@ -99,9 +101,83 @@ void Verosimilitud::init(unsigned int numneu,
   coszenith_edges = new std::vector<double>(
       coszenith_edges_array, coszenith_edges_array + coszenith_size);
 
+  // calculate oscillation flux averaged arrays
+  if(inusquids)
+    CalculateAveragedOscillationFlux();
 
   SetSimpsNIntervals(2);
   CalculateExpectation();
+}
+
+/*
+double Verosimilitud::SimpsAvg(double coszmin, double coszmax,
+                               double emin, double emax, double anti,
+                               size_t nintervals_e,
+                               ) {
+
+  double width = (emax - emin) / std::static_cast<(double>(nintervals_e);
+  double integral = 0;
+  double mean = 0;
+  double coszval;
+
+  for (int j = 0; j < 2; j++) {
+    //integral += OscillationProbability(emin, acos(coszval), anti);
+    integral += OscillationProbability(emin, coszval, anti);
+    for (int i = 1; i < (nintervals_e / 2); i++) {
+    coszval = coszmin + (double)j * (coszmax - coszmin);
+      integral += 2 * OscillationProbability(emin + 2 * (double)i * width,
+                                             coszval, anti);
+                                            // acos(coszval), anti);
+    }
+    for (int i = 1; i < (nintervals_e / 2 + 1); i++) {
+      integral += 4 * OscillationProbability(emin + (2 * (double)i - 1) * width,
+                                             coszval, anti);
+                                             //acos(coszval), anti);
+    }
+    //integral += OscillationProbability(emax, acos(coszval), anti);
+    integral += OscillationProbability(emax, coszval, anti);
+    integral *= width / 3.0;
+    mean += integral / (2 * (emax - emin));
+    integral = 0;
+  }
+  return mean;
+}
+*/
+
+void Verosimilitud::CalculateAveragedOscillationFlux(){
+  IntegrateWorkspace ws = IntegrateWorkspace(5000);
+  const double GeV = 1.0e9;
+  const double integration_error = 1e-3;
+  const unsigned int integration_iterations = 5000;
+  const unsigned int it_is_a_muon = 1;
+
+  flux_averaged_with_osc.resize(std::vector<size_t>{2,CosZenithBins,NeutrinoEnergyBins,2});
+  std::fill(flux_averaged_with_osc.begin(),flux_averaged_with_osc.end(),0);
+
+  for (unsigned int meson = 0; meson < 2; meson++) {
+    for(unsigned int z = 0; z < CosZenithBins; z++) {
+      unsigned int zp1 = z + 1;
+      double CosZenithMin = CosZenithEdges->Index(&z);
+      double CosZenithMax = CosZenithEdges->Index(&zp1);
+      for (unsigned int ie = 0; ie < NeutrinoEnergyBins; ie++) {
+        unsigned int iep1 = ie + 1;
+        double enu_min = NeutrinoEnergyEdges->Index(&ie);
+        double enu_max = NeutrinoEnergyEdges->Index(&iep1);
+        for(unsigned int anti = 0; anti < 2; anti++) {
+          for(double costh : nusquids::linspace(CosZenithMin,CosZenithMax,10)){
+            double deltaCosth=(CosZenithMax - CosZenithMin)/10.;
+            // magic
+            if(meson==0)//pion
+              flux_averaged_with_osc[0][z][ie][anti] += integrate(ws, [&,this](double enu) { return (this->nusquids_pion->EvalFlavor(it_is_a_muon, costh, enu * GeV, anti)); },
+                                                                   enu_min, enu_max, integration_error, integration_iterations)*deltaCosth;
+            else//kaon
+              flux_averaged_with_osc[1][z][ie][anti] += integrate(ws, [&,this](double enu) { return (this->nusquids_kaon->EvalFlavor(it_is_a_muon, costh, enu * GeV, anti)); },
+                                                                   enu_min, enu_max, integration_error, integration_iterations)*deltaCosth;
+          }
+        }
+      }
+    }
+  }
 }
 
 Verosimilitud::~Verosimilitud() {
@@ -215,10 +291,10 @@ double Verosimilitud::SimpsAvg(double coszmin, double coszmax, double emin,
   double coszval;
 
   for (int j = 0; j < 2; j++) {
-    coszval = coszmin + (double)j * (coszmax - coszmin);
     //integral += OscillationProbability(emin, acos(coszval), anti);
     integral += OscillationProbability(emin, coszval, anti);
     for (int i = 1; i < (nintervals_e / 2); i++) {
+    coszval = coszmin + (double)j * (coszmax - coszmin);
       integral += 2 * OscillationProbability(emin + 2 * (double)i * width,
                                              coszval, anti);
                                             // acos(coszval), anti);
@@ -277,7 +353,7 @@ void Verosimilitud::CalculateExpectation() {
         double CosZenithMax = CosZenithEdges->Index(&zp1);
 
         double oscprob;
-        if (ioscillation)
+        if (ioscillation and not inusquids)
           oscprob = SimpsAvg(CosZenithMin, CosZenithMax, eMin, eMax,
                              (double)anti, simps_nintervals);
         else
@@ -310,10 +386,13 @@ void Verosimilitud::CalculateExpectation() {
 
               counter++;
 
-              double AvgFlux = flux->Index(flux_indices);
               double EffAreaVal = area->Index(eff_area_indices);
 
-
+              double AvgFlux;
+              if(inusquids)
+                AvgFlux = flux_averaged_with_osc[meson][z][e][anti];
+              else
+                AvgFlux = flux->Index(flux_indices);
 
               unsigned int exp_indices[2] = {ep, z};
 

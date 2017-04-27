@@ -81,25 +81,26 @@ public:
 
   Verosimilitud(unsigned int numneu, char* data_path,char* flux_path, char* effective_area_path):
     ioscillation(false),inusquids(false),
-    de_solver(NULL),user_data(NULL),nusquids(NULL)
+    de_solver(NULL),user_data(NULL),nusquids_kaon(NULL),nusquids_pion(NULL)
   {
     init(numneu,data_path,flux_path,effective_area_path);
   }
 
   Verosimilitud(unsigned int numneu, char* data_path,char* flux_path, char* effective_area_path,
-                 std::shared_ptr<nusquids::nuSQUIDSAtm<>> nusquids):
+                 std::shared_ptr<nusquids::nuSQUIDSAtm<>> nusquids_kaon,
+                 std::shared_ptr<nusquids::nuSQUIDSAtm<>> nusquids_pion):
     ioscillation(true),inusquids(true),
-    de_solver(NULL),user_data(NULL),nusquids(nusquids)
+    de_solver(NULL),user_data(NULL),nusquids_kaon(nusquids_kaon),nusquids_pion(nusquids_pion)
   {
-    nuSQuIDSFillOscProb();
     init(numneu,data_path,flux_path,effective_area_path);
   }
 
-  Verosimilitud(unsigned int numneu, 
+  Verosimilitud(unsigned int numneu,
                 char* data_path, char* flux_path, char* effective_area_path,
                 std::vector<double> nu_osc_prob_array,std::vector<double> nubar_osc_prob_array):
     ioscillation(true),inusquids(false),
-    de_solver(NULL),user_data(NULL),nusquids(NULL),nu_osc_prob_array(nu_osc_prob_array),nubar_osc_prob_array(nubar_osc_prob_array)
+    de_solver(NULL),user_data(NULL),nusquids_kaon(NULL),nusquids_pion(NULL),
+    nu_osc_prob_array(nu_osc_prob_array),nubar_osc_prob_array(nubar_osc_prob_array)
   {
     init(numneu,data_path,flux_path,effective_area_path);
   }
@@ -116,8 +117,8 @@ public:
   }
   */
 
-  // work on me please!
-  void nuSQuIDSFillOscProb() {};
+  // fills in the arrays used in the nusquids calculation
+  void CalculateAveragedOscillationFlux();
 
   //--------------------------------------------------------//
   //! The Destructor
@@ -530,7 +531,9 @@ protected:
 
   pyoscfunc de_solver;
   void *user_data;
-  std::shared_ptr<nusquids::nuSQUIDSAtm<>> nusquids;
+  std::shared_ptr<nusquids::nuSQUIDSAtm<>> nusquids_kaon;
+  std::shared_ptr<nusquids::nuSQUIDSAtm<>> nusquids_pion;
+  nusquids::marray<double,4> flux_averaged_with_osc;
 
   std::vector<double> nu_osc_prob_array;
   std::vector<double> nubar_osc_prob_array;
@@ -586,9 +589,9 @@ protected:
   const double r_kpi_mean = 1;
   const double r_kpi_sigma = 0.1;
   const double r_nubarnu_mean = 1;
-  const double r_nubarnu_sigma = 0.025;
+  const double r_nubarnu_sigma = 0.05;
 	const double efficiency_mean = 1.0;
-	const double efficiency_sigma = 0.3;
+	const double efficiency_sigma = 1.0;
 
 private:
   // caches for memory efficiency
