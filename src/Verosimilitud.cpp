@@ -19,7 +19,7 @@
 #include "gsl_integrate_wrap.h"
 
 void Verosimilitud::init(unsigned int numneu,
-                         char* char_data_path, char* char_flux_path, char* char_effective_area_path)
+                         const char* char_data_path, const char* char_flux_path, const char* char_effective_area_path)
 {
   // Convert char to string
   std::string data_path(char_data_path);

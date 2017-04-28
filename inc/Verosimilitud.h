@@ -8,6 +8,7 @@
 #include "Tensor.h"
 #include "EffectiveArea.h"
 #include "ICData.h"
+#include "nusquids_decay.h"
 #include "ConventionalFlux.h"
 #include <functional>
 
@@ -57,7 +58,7 @@ typedef double (*pyoscfunc)(std::vector<double> argument, void *userdata);
 
 class Verosimilitud {
 protected:
-  void init(unsigned int numneu, char* data_path, char* flux_path, char* effective_area_path);
+  void init(unsigned int numneu, const char* data_path, const char* flux_path, const char* effective_area_path);
 public:
   //--------------------------------------------------------//
   //! The Constructor.
@@ -79,16 +80,16 @@ public:
      included. If [0,1], only 2010, and if [1,2], only 2011.
   */
 
-  Verosimilitud(unsigned int numneu, char* data_path,char* flux_path, char* effective_area_path):
+  Verosimilitud(unsigned int numneu, const char* data_path, const char* flux_path, const char* effective_area_path):
     ioscillation(false),inusquids(false),
     de_solver(NULL),user_data(NULL),nusquids_kaon(NULL),nusquids_pion(NULL)
   {
     init(numneu,data_path,flux_path,effective_area_path);
   }
 
-  Verosimilitud(unsigned int numneu, char* data_path,char* flux_path, char* effective_area_path,
-                 std::shared_ptr<nusquids::nuSQUIDSAtm<>> nusquids_kaon,
-                 std::shared_ptr<nusquids::nuSQUIDSAtm<>> nusquids_pion):
+  Verosimilitud(unsigned int numneu, const char* data_path, const char* flux_path, const char* effective_area_path,
+                 std::shared_ptr<nusquids::nuSQUIDSAtm<nusquids::nuSQUIDSDecay>> nusquids_kaon,
+                 std::shared_ptr<nusquids::nuSQUIDSAtm<nusquids::nuSQUIDSDecay>> nusquids_pion):
     ioscillation(true),inusquids(true),
     de_solver(NULL),user_data(NULL),nusquids_kaon(nusquids_kaon),nusquids_pion(nusquids_pion)
   {
@@ -96,7 +97,7 @@ public:
   }
 
   Verosimilitud(unsigned int numneu,
-                char* data_path, char* flux_path, char* effective_area_path,
+                const char* data_path, const char* flux_path, const char* effective_area_path,
                 std::vector<double> nu_osc_prob_array,std::vector<double> nubar_osc_prob_array):
     ioscillation(true),inusquids(false),
     de_solver(NULL),user_data(NULL),nusquids_kaon(NULL),nusquids_pion(NULL),
@@ -531,8 +532,8 @@ protected:
 
   pyoscfunc de_solver;
   void *user_data;
-  std::shared_ptr<nusquids::nuSQUIDSAtm<>> nusquids_kaon;
-  std::shared_ptr<nusquids::nuSQUIDSAtm<>> nusquids_pion;
+  std::shared_ptr<nusquids::nuSQUIDSAtm<nusquids::nuSQUIDSDecay>> nusquids_kaon;
+  std::shared_ptr<nusquids::nuSQUIDSAtm<nusquids::nuSQUIDSDecay>> nusquids_pion;
   nusquids::marray<double,4> flux_averaged_with_osc;
 
   std::vector<double> nu_osc_prob_array;
