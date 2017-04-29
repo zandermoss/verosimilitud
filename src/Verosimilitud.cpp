@@ -154,6 +154,9 @@ void Verosimilitud::CalculateAveragedOscillationFlux(){
   flux_averaged_with_osc.resize(std::vector<size_t>{2,CosZenithBins,NeutrinoEnergyBins,2});
   std::fill(flux_averaged_with_osc.begin(),flux_averaged_with_osc.end(),0);
 
+  auto costh_nusquids_range=nusquids_pion->GetCosthRange();
+  double max_costh=costh_nusquids_range.back();
+
   for (unsigned int meson = 0; meson < 2; meson++) {
     for(unsigned int z = 0; z < CosZenithBins; z++) {
       unsigned int zp1 = z + 1;
@@ -165,6 +168,7 @@ void Verosimilitud::CalculateAveragedOscillationFlux(){
         double enu_max = NeutrinoEnergyEdges->Index(&iep1);
         for(unsigned int anti = 0; anti < 2; anti++) {
           for(double costh : nusquids::linspace(CosZenithMin,CosZenithMax,10)){
+            if(costh>max_costh) continue;
             double deltaCosth=(CosZenithMax - CosZenithMin)/10.;
             // magic
             if(meson==0)//pion
