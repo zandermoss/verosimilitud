@@ -170,13 +170,14 @@ void Verosimilitud::CalculateAveragedOscillationFlux(){
           for(double costh : nusquids::linspace(CosZenithMin,CosZenithMax,10)){
             if(costh>max_costh) continue;
             double deltaCosth=(CosZenithMax - CosZenithMin)/10.;
+            double phaseSpace=(CosZenithMax - CosZenithMin)*(enu_max-enu_min);
             // magic
             if(meson==0)//pion
               flux_averaged_with_osc[0][z][ie][anti] += integrate(ws, [&,this](double enu) { return (this->nusquids_pion->EvalFlavor(it_is_a_muon, costh, enu * GeV, anti)); },
-                                                                   enu_min, enu_max, integration_error, integration_iterations)*deltaCosth;
+                                                                   enu_min, enu_max, integration_error, integration_iterations)*deltaCosth/phaseSpace;
             else//kaon
               flux_averaged_with_osc[1][z][ie][anti] += integrate(ws, [&,this](double enu) { return (this->nusquids_kaon->EvalFlavor(it_is_a_muon, costh, enu * GeV, anti)); },
-                                                                   enu_min, enu_max, integration_error, integration_iterations)*deltaCosth;
+                                                                   enu_min, enu_max, integration_error, integration_iterations)*deltaCosth/phaseSpace;
           }
         }
       }
