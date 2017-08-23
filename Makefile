@@ -18,6 +18,7 @@ CFLAGS = -Wall -g -fPIC -std=c++11
 #
 INCLUDES = -I./inc -I../nuSQUIDSDecay/inc -I/usr/include/python2.7 -I/usr/local/Cellar/hdf5/1.8.16_1/include -I/Users/marjon/local/dlib-18.18
 
+
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
@@ -27,6 +28,7 @@ LFLAGS = -L/usr/local/Cellar/hdf5/1.8.16_1/lib
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname 
 #   option, something like (this will link in libmylib.so and libm.so:
 LIBS = -lpython2.7 -lm -lhdf5 -lhdf5_cpp 
+#LIBS = -lm -lhdf5 -lhdf5_cpp 
 
 # define the C source files
 #SRCS = src/Verosimilitud.cpp src/Tools.cpp
