@@ -453,7 +453,7 @@ void Verosimilitud::CalculateExpectation() {
 //                  last +
 //                 	AvgFlux * EffAreaVal * livetime * oscprob;
               double current = last;
-              if(inusquids)
+              if(inusquids and effi==0)
                 current += AvgFlux; // already have put all on it
               else
                 current += AvgFlux * EffAreaVal * oscprob;
