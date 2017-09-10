@@ -103,7 +103,7 @@ void Verosimilitud::init(unsigned int numneu,
 
   // calculate oscillation flux averaged arrays
   if(inusquids){
-    //CalculateAveragedOscillationFlux();
+    CalculateAveragedOscillationFlux();
     LoadMCEvents();
     CalculateExpectationFromMC();
   }
