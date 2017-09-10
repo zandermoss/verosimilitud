@@ -27,7 +27,7 @@ LFLAGS = -L/usr/local/Cellar/hdf5/1.8.16_1/lib
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname 
 #   option, something like (this will link in libmylib.so and libm.so:
-LIBS = -lpython2.7 -lm -lhdf5 -lhdf5_cpp 
+LIBS = -lpython2.7 -lm -lhdf5 -lhdf5_cpp -lsquids -lnusquids -lgsl
 #LIBS = -lm -lhdf5 -lhdf5_cpp 
 
 # define the C source files
