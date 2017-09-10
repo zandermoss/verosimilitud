@@ -160,8 +160,8 @@ void Verosimilitud::CalculateExpectationFromMC(){
   const double GeV = 1.0e9;
   const unsigned int it_is_a_muon = 1;
 
-  flux_averaged_with_osc.resize(std::vector<size_t>{2,CosZenithBins,NeutrinoEnergyBins,2});
-  std::fill(flux_averaged_with_osc.begin(),flux_averaged_with_osc.end(),0);
+  mc_expectations.resize(std::vector<size_t>{2,CosZenithBins,NeutrinoEnergyBins,2});
+  std::fill(mc_expectations.begin(),mc_expectations.end(),0);
 
   for(unsigned int j=0; j<MCEvents.extent(0); j++){
     auto event=MCEvents[j];
@@ -186,8 +186,8 @@ void Verosimilitud::CalculateExpectationFromMC(){
     double enu = event[3];
     double costh = event[4];
     double weight = event[5];
-    flux_averaged_with_osc[0][iz][ie][anti] += weight*nusquids_pion->EvalFlavor(it_is_a_muon, costh, enu * GeV, anti);
-    flux_averaged_with_osc[1][iz][ie][anti] += weight*nusquids_kaon->EvalFlavor(it_is_a_muon, costh, enu * GeV, anti);
+    mc_expectations[0][iz][ie][anti] += weight*nusquids_pion->EvalFlavor(it_is_a_muon, costh, enu * GeV, anti);
+    mc_expectations[1][iz][ie][anti] += weight*nusquids_kaon->EvalFlavor(it_is_a_muon, costh, enu * GeV, anti);
   }
 }
 
@@ -453,9 +453,9 @@ void Verosimilitud::CalculateExpectation() {
 //                  last +
 //                 	AvgFlux * EffAreaVal * livetime * oscprob;
               double current = last;
-              if(inusquids and effi==0)
-                current += AvgFlux; // already have put all on it
-              else
+              if(inusquids and effi==0){
+                current += mc_expectations[meson][z][e][anti]; // already have put all on it
+              } else
                 current += AvgFlux * EffAreaVal * oscprob;
 
               // dark magic

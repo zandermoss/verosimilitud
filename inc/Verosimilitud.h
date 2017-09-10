@@ -535,6 +535,7 @@ protected:
   std::shared_ptr<nusquids::nuSQUIDSAtm<nusquids::nuSQUIDSDecay>> nusquids_kaon;
   std::shared_ptr<nusquids::nuSQUIDSAtm<nusquids::nuSQUIDSDecay>> nusquids_pion;
   nusquids::marray<double,4> flux_averaged_with_osc;
+  nusquids::marray<double,4> mc_expectations;
   nusquids::marray<double,2> MCEvents;
   const std::string mc_path;
   void LoadMCEvents();
