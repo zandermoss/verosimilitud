@@ -87,11 +87,11 @@ public:
     init(numneu,data_path,flux_path,effective_area_path);
   }
 
-  Verosimilitud(unsigned int numneu, const char* data_path, const char* flux_path, const char* effective_area_path,
+  Verosimilitud(unsigned int numneu, const char* data_path, const char* flux_path, const char* effective_area_path, std::string mc_path,
                  std::shared_ptr<nusquids::nuSQUIDSAtm<nusquids::nuSQUIDSDecay>> nusquids_kaon,
                  std::shared_ptr<nusquids::nuSQUIDSAtm<nusquids::nuSQUIDSDecay>> nusquids_pion):
     ioscillation(true),inusquids(true),
-    de_solver(NULL),user_data(NULL),nusquids_kaon(nusquids_kaon),nusquids_pion(nusquids_pion)
+    de_solver(NULL),user_data(NULL),nusquids_kaon(nusquids_kaon),nusquids_pion(nusquids_pion),mc_path(mc_path)
   {
     init(numneu,data_path,flux_path,effective_area_path);
   }
@@ -535,6 +535,10 @@ protected:
   std::shared_ptr<nusquids::nuSQUIDSAtm<nusquids::nuSQUIDSDecay>> nusquids_kaon;
   std::shared_ptr<nusquids::nuSQUIDSAtm<nusquids::nuSQUIDSDecay>> nusquids_pion;
   nusquids::marray<double,4> flux_averaged_with_osc;
+  nusquids::marray<double,2> MCEvents;
+  const std::string mc_path;
+  void LoadMCEvents();
+  void CalculateExpectationFromMC();
 
   std::vector<double> nu_osc_prob_array;
   std::vector<double> nubar_osc_prob_array;

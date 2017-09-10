@@ -102,11 +102,20 @@ void Verosimilitud::init(unsigned int numneu,
       coszenith_edges_array, coszenith_edges_array + coszenith_size);
 
   // calculate oscillation flux averaged arrays
-  if(inusquids)
-    CalculateAveragedOscillationFlux();
+  if(inusquids){
+    //CalculateAveragedOscillationFlux();
+    LoadMCEvents();
+    CalculateExpectationFromMC();
+  }
 
   SetSimpsNIntervals(2);
   CalculateExpectation();
+}
+
+void Verosimilitud::LoadMCEvents(){
+  if(not nusquids::fexists(mc_path))
+    throw std::runtime_error("Invalid MC path");
+  MCEvents=nusquids::quickread(mc_path);
 }
 
 /*
@@ -143,6 +152,44 @@ double Verosimilitud::SimpsAvg(double coszmin, double coszmax,
   return mean;
 }
 */
+
+void Verosimilitud::CalculateExpectationFromMC(){
+  if(MCEvents.size()==0)
+    throw std::runtime_error("MC not loaded");
+
+  const double GeV = 1.0e9;
+  const unsigned int it_is_a_muon = 1;
+
+  flux_averaged_with_osc.resize(std::vector<size_t>{2,CosZenithBins,NeutrinoEnergyBins,2});
+  std::fill(flux_averaged_with_osc.begin(),flux_averaged_with_osc.end(),0);
+
+  for(unsigned int j=0; j<MCEvents.extent(0); j++){
+    auto event=MCEvents[j];
+    unsigned int anti = (event[0] == 13) ? 0 : 1;
+    double eprox=event[1];
+    double costh_r=event[2];
+
+    auto cthit=std::lower_bound((*coszenith_edges).begin(),(*coszenith_edges).end(),costh_r);
+    if(cthit==(*coszenith_edges).end())
+      throw std::runtime_error("zenith not found in the array.");
+    if(cthit!=(*coszenith_edges).begin())
+      cthit--;
+    size_t iz=std::distance((*coszenith_edges).begin(),cthit);
+
+    auto eit=std::lower_bound((*eprox_edges).begin(),(*eprox_edges).end(),eprox);
+    if(eit==(*eprox_edges).end())
+      throw std::runtime_error("energy not found in the array.");
+    if(eit!=(*eprox_edges).begin())
+      eit--;
+    size_t ie=std::distance((*eprox_edges).begin(),eit);
+
+    double enu = event[3];
+    double costh = event[4];
+    double weight = event[5];
+    flux_averaged_with_osc[0][iz][ie][anti] += weight*nusquids_pion->EvalFlavor(it_is_a_muon, costh, enu * GeV, anti);
+    flux_averaged_with_osc[1][iz][ie][anti] += weight*nusquids_kaon->EvalFlavor(it_is_a_muon, costh, enu * GeV, anti);
+  }
+}
 
 void Verosimilitud::CalculateAveragedOscillationFlux(){
   IntegrateWorkspace ws = IntegrateWorkspace(5000);
@@ -405,9 +452,13 @@ void Verosimilitud::CalculateExpectation() {
 //              double current =
 //                  last +
 //                 	AvgFlux * EffAreaVal * livetime * oscprob;
-              double current =
-                  last +
-                 	AvgFlux * EffAreaVal * oscprob;
+              double current = last;
+              if(inusquids)
+                current += AvgFlux; // already have put all on it
+              else
+                current += AvgFlux * EffAreaVal * oscprob;
+
+              // dark magic
               (expectation[effi])[which_flux]->SetIndex(exp_indices, current);
 						}
           }
