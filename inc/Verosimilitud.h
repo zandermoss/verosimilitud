@@ -388,18 +388,18 @@ this function, see the documentation for "::"GetFluxVec
 
 
   //--------------------------------------------------------//
-  //! Calculates the gradient of the Chi2 returned by "::"Chi2 in the space of
-  //! nuisance parameters.
-  /*!
-                  The form of this gradient was calculated by hand analytically
-     in the interest of speed in the minimization, and will have to be altered
-     when further nuisance parameters are added, although numerical
-     differentiation is an option.
-                  \param the vector of nuisance parameters, in the dlib::matrix
-     format for compatibility with the minimizer.
-                  \return the gradient in nuisance space (love that name), again
-     in the dlib::matrix format.
-          */
+  //  //! Calculates the gradient of the Chi2 returned by "::"Chi2 in the space of
+  //    //! nuisance parameters.
+  //      /*!
+  //                                                                                               */
+
+  double LLHGradNorm(const dlib::matrix<double, 0, 1> &gradient) const;
+
+
+  //--------------------------------------------------------//
+  //! Calculates the norm of gradient of the LLH returned by "::"LLHGradient.
+  //  /*!
+
 
   dlib::matrix<double, 0, 1>
   Chi2Gradient(const dlib::matrix<double, 0, 1> &nuisance) const;
@@ -535,7 +535,7 @@ protected:
   std::shared_ptr<nusquids::nuSQUIDSAtm<nusquids::nuSQUIDSDecay>> nusquids_kaon;
   std::shared_ptr<nusquids::nuSQUIDSAtm<nusquids::nuSQUIDSDecay>> nusquids_pion;
   nusquids::marray<double,4> flux_averaged_with_osc;
-  nusquids::marray<double,4> mc_expectations;
+  nusquids::marray<double,5> mc_expectations;
   nusquids::marray<double,2> MCEvents;
   const std::string mc_path;
   void LoadMCEvents();
@@ -595,9 +595,13 @@ protected:
   const double r_kpi_mean = 1;
   const double r_kpi_sigma = 0.1;
   const double r_nubarnu_mean = 1;
-  const double r_nubarnu_sigma = 0.05;
-	const double efficiency_mean = 1.0;
-	const double efficiency_sigma = 1.0;
+  const double r_nubarnu_sigma = 0.025;
+  const double efficiency_mean = 1.0;
+  const double efficiency_sigma = 1.0;
+  const double delta_mean = 0.0;
+  const double delta_sigma = 0.035*0.5; // the second term depends on the flux. 0.5 for PG-QGSJET-II-04
+
+
 
 private:
   // caches for memory efficiency

@@ -11,8 +11,8 @@
 #CC = g++
 
 # define any compile-time flags
-CFLAGS = -Wall -g -fPIC -std=c++11
-#CFLAGS = -Wall -O3  -fPIC -std=c++11 # use this when actually running massively
+#CFLAGS = -Wall -g -fPIC -std=c++11
+CFLAGS = -Wall -O3  -fPIC -std=c++11 # use this when actually running massively
 
 # define any directories containing header files other than /usr/include
 #
@@ -22,7 +22,7 @@ INCLUDES = -I./inc -I../nuSQUIDSDecay/inc -I/usr/include/python2.7 -I/usr/local/
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
-LFLAGS = -L/usr/local/Cellar/hdf5/1.8.16_1/lib
+LFLAGS = -L/usr/local/Cellar/hdf5/1.8.16_1/lib -L/home/mmoulai/local/lib
 
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname 

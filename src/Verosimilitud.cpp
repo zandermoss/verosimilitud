@@ -27,7 +27,7 @@ void Verosimilitud::init(unsigned int numneu,
   std::string effective_area_path(char_effective_area_path);
 
   // initialize cache
-  gradient_cache = dlib::matrix<double, 0, 1>(5);
+  gradient_cache = dlib::matrix<double, 0, 1>(6);
 
   simps_nintervals = 2;
 
@@ -114,7 +114,7 @@ void Verosimilitud::init(unsigned int numneu,
 
 void Verosimilitud::LoadMCEvents(){
   if(not nusquids::fexists(mc_path))
-    throw std::runtime_error("Invalid MC path");
+    throw std::runtime_error("Invalid MC path "+ mc_path);
   MCEvents=nusquids::quickread(mc_path);
 }
 
@@ -160,14 +160,18 @@ void Verosimilitud::CalculateExpectationFromMC(){
   const double GeV = 1.0e9;
   const unsigned int it_is_a_muon = 1;
 
-  mc_expectations.resize(std::vector<size_t>{2,CosZenithBins,NeutrinoEnergyBins,2});
+  mc_expectations.resize(std::vector<size_t>{2,CosZenithBins,NeutrinoEnergyBins,EnergyProxyBins,2});
   std::fill(mc_expectations.begin(),mc_expectations.end(),0);
 
   for(unsigned int j=0; j<MCEvents.extent(0); j++){
     auto event=MCEvents[j];
     unsigned int anti = (event[0] == 13) ? 0 : 1;
+
     double eprox=event[1];
     double costh_r=event[2];
+    double enu = event[3];
+    double costh = event[4];
+    double weight = event[5];
 
     auto cthit=std::lower_bound((*coszenith_edges).begin(),(*coszenith_edges).end(),costh_r);
     if(cthit==(*coszenith_edges).end())
@@ -183,11 +187,15 @@ void Verosimilitud::CalculateExpectationFromMC(){
       eit--;
     size_t ie=std::distance((*eprox_edges).begin(),eit);
 
-    double enu = event[3];
-    double costh = event[4];
-    double weight = event[5];
-    mc_expectations[0][iz][ie][anti] += weight*nusquids_pion->EvalFlavor(it_is_a_muon, costh, enu * GeV, anti);
-    mc_expectations[1][iz][ie][anti] += weight*nusquids_kaon->EvalFlavor(it_is_a_muon, costh, enu * GeV, anti);
+    auto etit=std::lower_bound((*energy_edges).begin(),(*energy_edges).end(),enu);
+    if(etit==(*energy_edges).end())
+      throw std::runtime_error("energy not found in the array.");
+    if(etit!=(*energy_edges).begin())
+      etit--;
+    size_t ite=std::distance((*energy_edges).begin(),etit);
+
+    mc_expectations[0][iz][ite][ie][anti] += weight*nusquids_pion->EvalFlavor(it_is_a_muon, costh, enu * GeV, anti);
+    mc_expectations[1][iz][ite][ie][anti] += weight*nusquids_kaon->EvalFlavor(it_is_a_muon, costh, enu * GeV, anti);
   }
 }
 
@@ -453,8 +461,9 @@ void Verosimilitud::CalculateExpectation() {
 //                  last +
 //                 	AvgFlux * EffAreaVal * livetime * oscprob;
               double current = last;
-              if(inusquids and effi==0){
-                current += mc_expectations[meson][z][e][anti]; // already have put all on it
+ 	      //std::cout << effi << "  "  << eff_area->GetEff(effi) << std::endl;
+              if(inusquids and effi==2){
+                current += mc_expectations[meson][z][e][ep][anti]; // already have put all on it
               } else
                 current += AvgFlux * EffAreaVal * oscprob;
 
@@ -524,8 +533,8 @@ std::vector<double> Verosimilitud::MinLLH(std::vector<double> param,
                                           std::vector<double> low_bound,
                                           std::vector<double> high_bound,
                                           std::vector<bool> param_to_minimize) {
-  if (param.size() != 5) {
-    std::cout << "param size not equal to 5. break." << std::endl;
+  if (param.size() != 6) {
+    std::cout << "param size not equal to 6. break." << std::endl;
     exit(1);
   }
   if (param.size() != param_to_minimize.size()) {
@@ -618,7 +627,7 @@ unsigned int Verosimilitud::EfficiencySwitch(double eff) const{
 }
 
 void Verosimilitud::PerturbExpectation(const dlib::matrix<double, 0, 1> &nuisance, Tensor* perturbed_expectation) const{
-  if(nuisance.size()!=5)
+  if(nuisance.size()!=6)
     throw std::runtime_error("Incorrect number of nuisance parameters supplied.");
 
   const double norm = nuisance(0);
@@ -626,6 +635,7 @@ void Verosimilitud::PerturbExpectation(const dlib::matrix<double, 0, 1> &nuisanc
   const double r_kpi = nuisance(2);     // ratio of kaons to pions
   const double r_nubarnu = nuisance(3); // ratio of nubars to nus
   const double efficiency = nuisance(4);
+  const double delta = nuisance(5);
 
 	unsigned int low_eff_index = EfficiencySwitch(efficiency);
 //	std::cout << "LE Index: " << low_eff_index << std::endl;
@@ -655,7 +665,14 @@ void Verosimilitud::PerturbExpectation(const dlib::matrix<double, 0, 1> &nuisanc
 	                        r_nubarnu * (scalar_exp[1] + r_kpi * scalar_exp[3]));
 			}
 
-	   	double fully_perturbed_scalar = norm * pow(center / E0, -gamma) * (((eff_pert_scalars[1] - eff_pert_scalars[0])/(high_eff-low_eff))*(efficiency - low_eff) + eff_pert_scalars[0]);
+		double costh=(*coszenith_centers)[z];
+		double E0_=360;
+		double E1_=11279;
+		double kk=200;
+		double costh0=0.4;
+		double delta_ =1. + (costh + costh0)*delta*(1.+(center-E0_)/E1_*(1./(1.+exp(-kk*(costh+costh0)))));
+
+	   	double fully_perturbed_scalar = norm * pow(center / E0, -gamma) * delta_ * (((eff_pert_scalars[1] - eff_pert_scalars[0])/(high_eff-low_eff))*(efficiency - low_eff) + eff_pert_scalars[0]);
 			perturbed_expectation->SetIndex(indices,fully_perturbed_scalar);
     }
   }
@@ -669,6 +686,7 @@ double Verosimilitud::LLH(const dlib::matrix<double, 0, 1> &nuisance) const {
   const double r_kpi = nuisance(2);     // ratio of kaons to pions
   const double r_nubarnu = nuisance(3); // ratio of nubars to nus
   const double efficiency = nuisance(4); 
+  const double delta = nuisance(5); 
 
   unsigned int indices[2];
   double llh = 0;
@@ -705,8 +723,9 @@ double Verosimilitud::LLH(const dlib::matrix<double, 0, 1> &nuisance) const {
   double r_nubarnu_penalty =
       LogGaussianProbability(r_nubarnu, r_nubarnu_mean, r_nubarnu_sigma);
 	double efficiency_penalty = LogGaussianProbability(efficiency, efficiency_mean, efficiency_sigma);
+	double delta_penalty = LogGaussianProbability(delta, delta_mean, delta_sigma);
 
-  llh += norm_penalty + gamma_penalty + r_kpi_penalty + r_nubarnu_penalty + efficiency_penalty;
+  llh += norm_penalty + gamma_penalty + r_kpi_penalty + r_nubarnu_penalty + efficiency_penalty + delta_penalty;
 
   return llh;
 }
@@ -720,6 +739,7 @@ dlib::matrix<double, 0, 1> Verosimilitud::LLHGradient(const dlib::matrix<double,
   const double r_kpi = nuisance(2);     // ratio of kaons to pions
   const double r_nubarnu = nuisance(3); // ratio of nubars to nus
   const double efficiency = nuisance(4); 
+  const double delta = nuisance(5); 
 
 	unsigned int low_eff_index = EfficiencySwitch(efficiency);
 	double low_eff = eff_area->GetEff(low_eff_index);
@@ -735,6 +755,7 @@ dlib::matrix<double, 0, 1> Verosimilitud::LLHGradient(const dlib::matrix<double,
   double grad2 = 0;
   double grad3 = 0;
   double grad4 = 0;
+  double grad5 = 0;
 
   for (unsigned int ep = (*eprox_cuts)[0]; ep < (*eprox_cuts)[1]; ep++) {
     center = (*eprox_centers)[ep];
@@ -753,12 +774,19 @@ dlib::matrix<double, 0, 1> Verosimilitud::LLHGradient(const dlib::matrix<double,
 	                        r_nubarnu * (scalar_exp[1] + r_kpi * scalar_exp[3]));
 			}
 
+		double costh=(*coszenith_centers)[z];
+		double E0_=360;
+		double E1_=11279;
+		double kk=200;
+		double costh0=0.4;
+		double kappa = (costh + costh0)*(1.+(center-E0_)/E1_*(1./(1.+exp(-kk*(costh+costh0)))));
+		double delta_ = 1. + delta*kappa;
 
-	   	double fully_perturbed_scalar = norm * pow(center / E0, -gamma) * (((eff_pert_scalars[1] - eff_pert_scalars[0])/(high_eff-low_eff))*(efficiency - low_eff) + eff_pert_scalars[0]);
+	   	double fully_perturbed_scalar = norm * pow(center / E0, -gamma) * delta_ * (((eff_pert_scalars[1] - eff_pert_scalars[0])/(high_eff-low_eff))*(efficiency - low_eff) + eff_pert_scalars[0]);
 
 
       if (!(std::isnan(LogPoissonProbability(scalar_data, fully_perturbed_scalar)))) {
-	   		grad4 += norm * pow(center / E0, -gamma) * ((eff_pert_scalars[1] - eff_pert_scalars[0])/(high_eff-low_eff))*(scalar_data / fully_perturbed_scalar - 1);
+	   		grad4 += norm * pow(center / E0, -gamma) * delta_ * ((eff_pert_scalars[1] - eff_pert_scalars[0])/(high_eff-low_eff))*(scalar_data / fully_perturbed_scalar - 1);
 			}
 
 
@@ -776,33 +804,48 @@ dlib::matrix<double, 0, 1> Verosimilitud::LLHGradient(const dlib::matrix<double,
         grad0 += (fully_perturbed_scalar / norm) * (scalar_data / fully_perturbed_scalar - 1);
         grad1 += (-1.0)* fully_perturbed_scalar * log(center / E0) *
                  (scalar_data / fully_perturbed_scalar - 1);
-        grad2 += norm * pow(center / E0, -gamma) *
+        grad2 += norm * delta_ * pow(center / E0, -gamma) *
                  (scalar_exp[2] + r_nubarnu * scalar_exp[3]) *
                  (scalar_data / fully_perturbed_scalar - 1);
-        grad3 += norm * pow(center / E0, -gamma) *
+        grad3 += norm * delta_ *pow(center / E0, -gamma) *
                  (scalar_exp[1] + r_kpi * scalar_exp[3]) *
-                 (scalar_data / fully_perturbed_scalar - 1);
-			}
+		 (scalar_data / fully_perturbed_scalar - 1);
+        grad5 += (fully_perturbed_scalar*kappa/(1.+kappa*delta)) * (scalar_data / fully_perturbed_scalar - 1);
+		}
 
 
 		}
 	}
 
+	// adding priors
 	grad0 += (-1.0)*(norm - norm_mean) / pow(norm_sigma, 2);
 	grad1 += (-1.0)*(gamma - gamma_mean) / pow(gamma_sigma, 2);
 	grad2 += (-1.0)*(r_kpi - r_kpi_mean) / pow(r_kpi_sigma, 2);
 	grad3 += (-1.0)*(r_nubarnu - r_nubarnu_mean) / pow(r_nubarnu_sigma, 2);
 	grad4 += (-1.0)*(efficiency - efficiency_mean) / pow(efficiency_sigma, 2);
+	grad5 += (-1.0)*(delta - delta_mean) / pow(delta_sigma, 2);
 	
   gradient_cache(0) = grad0;
   gradient_cache(1) = grad1;
   gradient_cache(2) = grad2;
   gradient_cache(3) = grad3;
   gradient_cache(4) = grad4;
+  gradient_cache(5) = grad5;
 
   return gradient_cache;
 }
 
+
+double Verosimilitud::LLHGradNorm(const dlib::matrix<double, 0, 1> &gradient) const {
+  const double g0 = gradient(0);
+  const double g1 = gradient(1);
+  const double g2 = gradient(2);
+  const double g3 = gradient(3);
+  const double g4 = gradient(4);
+  const double g5 = gradient(5);
+
+  return pow( pow(g0,2)+pow(g1,2)+pow(g2,2)+pow(g3,2)+pow(g4,2)+pow(g5,2),0.5);
+}
 
 double Verosimilitud::Chi2(const dlib::matrix<double, 0, 1> &nuisance) const {
   // Calculate saturated log-likelihood
@@ -831,8 +874,8 @@ dlib::matrix<double, 0, 1> Verosimilitud::Chi2Gradient(const dlib::matrix<double
 
 
 double Verosimilitud::GetLLH(std::vector<double> param) {
-  dlib::matrix<double, 0, 1> nuisance(5);
-	for (int i=0; i<5; i++){
+  dlib::matrix<double, 0, 1> nuisance(6);
+	for (int i=0; i<6; i++){
   	nuisance(i) = (param)[i];
 	}
 
@@ -840,19 +883,19 @@ double Verosimilitud::GetLLH(std::vector<double> param) {
 }
 
 double Verosimilitud::GetLLHGradient(std::vector<double> param, unsigned int index) {
-  dlib::matrix<double, 0, 1> nuisance(5);
-	for (int i=0; i<5; i++){
+  dlib::matrix<double, 0, 1> nuisance(6);
+	for (int i=0; i<6; i++){
   	nuisance(i) = (param)[i];
 	}
-  dlib::matrix<double, 0, 1> gradient(5);
+  dlib::matrix<double, 0, 1> gradient(6);
 	gradient = LLHGradient(nuisance);
 	return gradient(index);
 }
 
 
 double Verosimilitud::GetChi2(std::vector<double> param) {
-  dlib::matrix<double, 0, 1> nuisance(5);
-	for (int i=0; i<5; i++){
+  dlib::matrix<double, 0, 1> nuisance(6);
+	for (int i=0; i<6; i++){
   	nuisance(i) = (param)[i];
 	}
 
@@ -860,11 +903,11 @@ double Verosimilitud::GetChi2(std::vector<double> param) {
 }
 
 double Verosimilitud::GetChi2Gradient(std::vector<double> param, unsigned int index) {
-  dlib::matrix<double, 0, 1> nuisance(5);
-	for (int i=0; i<5; i++){
+  dlib::matrix<double, 0, 1> nuisance(6);
+	for (int i=0; i<6; i++){
   	nuisance(i) = (param)[i];
 	}
-  dlib::matrix<double, 0, 1> gradient(5);
+  dlib::matrix<double, 0, 1> gradient(6);
 	gradient = Chi2Gradient(nuisance);
 	return gradient(index);
 }
